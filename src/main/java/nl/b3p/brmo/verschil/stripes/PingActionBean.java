@@ -17,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
  * ping actionbean. {@code /rest/ping?end=2008-04-12}.
  */
 @RestActionBean
-@UrlBinding("/rest/{location}")
+@UrlBinding("/rest/ping")
 public class PingActionBean implements ActionBean {
     private static final Log LOG = LogFactory.getLog(PingActionBean.class);
 
