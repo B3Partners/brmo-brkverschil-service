@@ -27,6 +27,11 @@ timestamps {
                 sh "mvn -e test -B"
             }
 
+            stage('Integration Test') {
+                echo "Running integration tests"
+                sh "mvn -e -B clean verify -Ppostgresql" 
+            }
+
             stage('Publish Test Results') {
                 junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml, **/target/failsafe-reports/TEST-*.xml'
             }

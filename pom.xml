@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>nl.b3p</groupId>
     <artifactId>brmo-brkverschil-service</artifactId>
@@ -34,14 +35,48 @@
         <system>Jenkins</system>
         <url>http://192.168.1.57:8080/job/B3Partners/job/brmo-brkverschil-service/</url>
     </ciManagement>
+    <distributionManagement>
+        <site>
+            <id>gh-pages</id>
+            <name>github pages site</name>
+            <url>scm:git:ssh://git@github.com/b3partners/brmo-brkverschil-service.git</url>
+        </site>
+        <repository>
+            <id>repo.b3p.nl</id>
+            <name>B3Partners releases repository</name>
+            <url>http://repo.b3p.nl/nexus/content/repositories/releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>repo.b3p.nl</id>
+            <name>B3Partners snapshots repository</name>
+            <url>http://repo.b3p.nl/nexus/content/repositories/snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+    <repositories>
+        <repository>
+            <id>B3Partners</id>
+            <name>Releases hosted by B3Partners</name>
+            <url>http://repo.b3p.nl/nexus/content/groups/public/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <java.version>1.8</java.version>
+        <project.build.sourceVersion>${java.version}</project.build.sourceVersion>
+        <project.build.targetVersion>${java.version}</project.build.targetVersion>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <test.onlyITs>false</test.onlyITs>
         <junit.jupiter.version>5.2.0</junit.jupiter.version>
         <junit.platform.version>1.2.0</junit.platform.version>
         <brmo.version>1.6.0-SNAPSHOT</brmo.version>
+        <tomcat.version>7.0.90</tomcat.version>
+        <postgresql.jdbc.version>42.2.4</postgresql.jdbc.version>
+        <maven.surefire.version>2.22.0</maven.surefire.version>
     </properties>
     <dependencies>
         <dependency>
@@ -62,7 +97,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.9.5</version>
+            <version>2.9.6</version>
         </dependency>
         <dependency>
             <groupId>org.stripesstuff</groupId>
@@ -77,7 +112,7 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.1</version>
+            <version>2.6</version>
         </dependency>
         <dependency>
             <groupId>nl.b3p</groupId>
@@ -133,30 +168,70 @@
             <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.httpunit</groupId>
+            <artifactId>httpunit</artifactId>
+            <version>1.7.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.6</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.dbunit</groupId>
+            <artifactId>dbunit</artifactId>
+            <version>2.5.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>nl.b3p</groupId>
+            <artifactId>brmo-test-util</artifactId>
+            <version>${brmo.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-catalina</artifactId>
+            <version>${tomcat.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-dbcp</artifactId>
+            <version>${tomcat.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.25</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <finalName>brmo-verschil-service</finalName>
+        <defaultGoal>package</defaultGoal>
         <pluginManagement>
             <plugins>
                 <plugin>
                     <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.0.2</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.7.0</version>
+                    <version>3.8.0</version>
                 </plugin>
-                <plugin>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.20.1</version>
-                </plugin>
+
                 <plugin>
                     <artifactId>maven-war-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.2.2</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-install-plugin</artifactId>
@@ -175,8 +250,160 @@
                     <artifactId>git-commit-id-plugin</artifactId>
                     <version>2.2.4</version>
                 </plugin>
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven.surefire.version}</version>
+                    <configuration>
+                        <argLine>-XX:+TieredCompilation -XX:TieredStopAtLevel=1</argLine>
+                        <trimStackTrace>false</trimStackTrace>
+                        <useFile>false</useFile>
+                        <excludes>
+                            <exclude>**/*IntegrationTest.java</exclude>
+                        </excludes>
+                        <skipTests>${test.onlyITs}</skipTests>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${maven.surefire.version}</version>
+                    <configuration>
+                        <argLine>-XX:+TieredCompilation -XX:TieredStopAtLevel=1</argLine>
+                        <trimStackTrace>false</trimStackTrace>
+                        <useFile>false</useFile>
+                        <includes>
+                            <include>**/*IntegrationTest.java</include>
+                        </includes>
+                        <systemPropertyVariables/>
+                        <trimStackTrace>false</trimStackTrace>
+                        <useFile>false</useFile>
+                        <skipTests>!${test.onlyITs}</skipTests>
+                        <skipITs>!${test.onlyITs}</skipITs>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.platform</groupId>
+                            <artifactId>junit-platform-surefire-provider</artifactId>
+                            <version>${junit.platform.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>properties-maven-plugin</artifactId>
+                    <version>1.0.0</version>
+                </plugin>
+                <plugin>
+                    <artifactId>tomcat7-maven-plugin</artifactId>
+                    <version>2.2</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.tomcat.embed</groupId>
+                            <artifactId>tomcat-embed-core</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-util</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-coyote</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-api</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-jdbc</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-dbcp</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-servlet-api</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-jsp-api</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-jasper</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-jasper-el</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-el-api</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-catalina</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-tribes</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-catalina-ha</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-annotations-api</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat-juli</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat.embed</groupId>
+                            <artifactId>tomcat-embed-logging-juli</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.tomcat.embed</groupId>
+                            <artifactId>tomcat-embed-logging-log4j</artifactId>
+                            <version>${tomcat.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
             </plugins>
         </pluginManagement>
+        <testResources>
+            <testResource>
+                <directory>${project.basedir}/src/test/resources/</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
@@ -254,4 +481,106 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>postgresql</id>
+            <properties>
+            </properties>
+            <build>
+                <filters>
+                    <filter>${project.basedir}/src/test/resources/postgresql.properties</filter>
+                </filters>
+                <testResources>
+                    <testResource>
+                        <directory>${project.basedir}/src/test/tomcatconf/</directory>
+                        <filtering>true</filtering>
+                    </testResource>
+                    <testResource>
+                        <directory>${project.basedir}/src/test/resources/</directory>
+                    </testResource>
+                </testResources>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <configuration>
+                            <files>
+                                <file>${project.basedir}/src/test/resources/postgresql.properties</file>
+                                <file>${project.basedir}/src/test/resources/local.postgresql.properties</file>
+                            </files>
+                            <quiet>true</quiet>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>read-project-properties</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.tomcat.maven</groupId>
+                        <artifactId>tomcat7-maven-plugin</artifactId>
+                        <configuration>
+                            <port>9090</port>
+                            <!-- Note: dit bestand wordt neergezet tijdens 'test' phase.
+                            Om Tomcat standalone te draaien gebruik je
+                            'mvn clean test tomcat7:run -Ppostgresql' -->
+                            <contextFile>${project.build.directory}/test-classes/testcontext.xml</contextFile>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>tomcat-run</id>
+                                <goals>
+                                    <goal>run-war-only</goal>
+                                </goals>
+                                <phase>pre-integration-test</phase>
+                                <configuration>
+                                    <fork>true</fork>
+                                    <skip>${maven.test.skip}</skip>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>tomcat-shutdown</id>
+                                <goals>
+                                    <goal>shutdown</goal>
+                                </goals>
+                                <phase>post-integration-test</phase>
+                                <configuration>
+                                    <skip>${maven.test.skip}</skip>
+                                    <skipErrorOnShutdown>true</skipErrorOnShutdown>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.postgresql</groupId>
+                                <artifactId>postgresql</artifactId>
+                                <version>${postgresql.jdbc.version}</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <database.properties.file>postgresql.properties</database.properties.file>
+                            </systemPropertyVariables>
+                            <argLine>-XX:+TieredCompilation -XX:TieredStopAtLevel=1</argLine>
+                            <rerunFailingTestsCount>0</rerunFailingTestsCount>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>default</id>
+            <activation>
+                <file>
+                    <exists>pom.xml</exists>
+                </file>
+            </activation>
+        </profile>
+    </profiles>
 </project>
