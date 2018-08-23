@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns="http://java.sun.com/xml/ns/javaee"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://java.sun.com/xml/ns/javaee"
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
          version="3.0"
          metadata-complete="true">
@@ -85,51 +85,51 @@
         <servlet-name>StripesDispatcher</servlet-name>
         <url-pattern>*.wait</url-pattern>
     </servlet-mapping>
-<!--
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>layout</web-resource-name>
-            <url-pattern>/styles/*</url-pattern>
-            <url-pattern>/images/*</url-pattern>
-            <url-pattern>/scripts/*</url-pattern>
-            <url-pattern>/extjs/*</url-pattern>
-        </web-resource-collection>
-    </security-constraint>
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>basisregistratie upload service endpoint</web-resource-name>
-            <url-pattern>/rest/*</url-pattern>
-        </web-resource-collection>
-    </security-constraint>
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>all</web-resource-name>
-            <url-pattern>/*</url-pattern>
-        </web-resource-collection>
-        <auth-constraint>
+    <!--
+        <security-constraint>
+            <web-resource-collection>
+                <web-resource-name>layout</web-resource-name>
+                <url-pattern>/styles/*</url-pattern>
+                <url-pattern>/images/*</url-pattern>
+                <url-pattern>/scripts/*</url-pattern>
+                <url-pattern>/extjs/*</url-pattern>
+            </web-resource-collection>
+        </security-constraint>
+        <security-constraint>
+            <web-resource-collection>
+                <web-resource-name>basisregistratie upload service endpoint</web-resource-name>
+                <url-pattern>/rest/*</url-pattern>
+            </web-resource-collection>
+        </security-constraint>
+        <security-constraint>
+            <web-resource-collection>
+                <web-resource-name>all</web-resource-name>
+                <url-pattern>/*</url-pattern>
+            </web-resource-collection>
+            <auth-constraint>
+                <role-name>Admin</role-name>
+            </auth-constraint>
+        </security-constraint>
+        <security-constraint>
+            <web-resource-collection>
+                <web-resource-name>roles</web-resource-name>
+                <url-pattern>/logout.jsp</url-pattern>
+            </web-resource-collection>
+        </security-constraint>
+        <login-config>
+            <!- - BASIC is useful during development with lots of redeploys, use
+                 FORM for production
+            - ->
+            <auth-method>BASIC</auth-method>
+            <form-login-config>
+                <form-login-page>/login.jsp</form-login-page>
+                <form-error-page>/loginfail.jsp</form-error-page>
+            </form-login-config>
+        </login-config>
+        <security-role>
             <role-name>Admin</role-name>
-        </auth-constraint>
-    </security-constraint>
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>roles</web-resource-name>
-            <url-pattern>/logout.jsp</url-pattern>
-        </web-resource-collection>
-    </security-constraint>
-    <login-config>
-        <!- - BASIC is useful during development with lots of redeploys, use
-             FORM for production
-        - ->
-        <auth-method>BASIC</auth-method>
-        <form-login-config>
-            <form-login-page>/login.jsp</form-login-page>
-            <form-error-page>/loginfail.jsp</form-error-page>
-        </form-login-config>
-    </login-config>
-    <security-role>
-        <role-name>Admin</role-name>
-    </security-role>
--->
+        </security-role>
+    -->
     <session-config>
         <session-timeout>30</session-timeout>
     </session-config>

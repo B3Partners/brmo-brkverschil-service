@@ -1,15 +1,26 @@
+/*
+ * Copyright (C) 2018 B3Partners B.V.
+ */
 package nl.b3p.brmo.verschil.stripes;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.validation.Validate;
 import nl.b3p.brmo.verschil.util.ConfigUtil;
-import org.apache.commons.dbutils.DbUtils;
+import nl.b3p.brmo.verschil.util.ResultSetSerializer;
+import nl.b3p.brmo.verschil.util.ResultSetSerializerException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,21 +43,18 @@ import java.util.zip.ZipOutputStream;
 public class MutatiesActionBean implements ActionBean {
 
     private static final Log LOG = LogFactory.getLog(MutatiesActionBean.class);
-
+    private final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
     /**
      * verplichte datum begin periode. Datum in yyyy-mm-dd formaat.
      */
     @Validate
     private Date van;
-
     /**
      * optionele datum einde periode. Datum in yyyy-mm-dd formaat.
      */
     @Validate
     private Date tot = new Date();
-
     private ActionBeanContext context;
-    private final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
     private long copied;
 
     @GET
@@ -62,11 +70,9 @@ public class MutatiesActionBean implements ActionBean {
         workZip.deleteOnExit();
 
         // uitvoeren queries
-        try {
-            long nwOnrrgd = this.getNieuweOnroerendGoed(workDir);
-        } catch (SQLException e) {
-            LOG.error(e);
-        }
+        long nwOnrrgd = this.getNieuweOnroerendGoed(workDir);
+        LOG.debug("aantal nieuwe onroerende zaken is: " + nwOnrrgd);
+
 
         // zippen resultaat in workZip
         try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(workZip.toPath()))) {
@@ -74,8 +80,8 @@ public class MutatiesActionBean implements ActionBean {
                     .filter(path -> !Files.isDirectory(path))
                     .forEach(path -> {
                         ZipEntry zipEntry = new ZipEntry(workPath.relativize(path).toString());
-                try {
-                    LOG.debug("Putting file: " + zipEntry);
+                        try {
+                            LOG.debug("Putting file: " + zipEntry);
                             zs.putNextEntry(zipEntry);
                             Files.copy(path, zs);
                             zs.closeEntry();
@@ -97,76 +103,93 @@ public class MutatiesActionBean implements ActionBean {
         }.setFilename("mutaties_" + df.format(van) + "_" + df.format(tot) + ".zip")
                 .setLastModified(tot.getTime())
                 .setAttachment(false)
- //.setLength(copied)
+                //.setLength(copied)
                 ;
     }
 
     /**
      * ophalen nieuwe percelen en appartementsrechten. [2.3].
-     * 
      *
-     *
+     * @param workDir directory waar json resultaat wordt neergezet
      * @return aantal nieuw
-     * @throws SQLException als de openen van de database mislukt of er een
-     * andere database fout optreedt
-     * @throws FileNotFoundException als de werkdirectory niet gevonden kan
-     * worden
-     * @throws IOException als openen/sluiten van het werkbestand mislukt
-     *
      */
-    private long getNieuweOnroerendGoed(File workDir) throws SQLException, FileNotFoundException, IOException {
+    private long getNieuweOnroerendGoed(File workDir) {
+        // zie: https://www.postgresql.org/docs/9.6/static/rangetypes.html
+        // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief, maar niet in de archief tabel met een datum voor "van".
+        StringBuilder sql = new StringBuilder("select ")
+                .append("kad_identif")
+                .append(",dat_beg_geldh")
+                .append(" from kad_onrrnd_zk where '[")
+                .append(df.format(van))
+                .append(",")
+                .append(df.format(tot))
+                .append("]'::daterange @> dat_beg_geldh::date ")
+                .append(" and kad_identif not in (select kad_identif from kad_onrrnd_zk_archief where '")
+                .append(df.format(van))
+                .append("'::date < dat_beg_geldh::date)");
 
-        ResultSet rs = null;
+        /* TODO kolommen:
+         * - oppervlakte
+         * - x-coordinaat
+         * - y-coordinaat
+         * - kadastrale aanduiding? (kadastraal object nummer)
+         * - KPR nummer
+         * - aandeel
+         * - soort recht
+         * - ontstaan uit
+         * via left join app_re en kad_perceel
+         * */
+
+        return queryToJson(workDir, "NieuweOnroerendGoed.csv", sql.toString());
+    }
+
+    /**
+     * @param workDir      directory waar json resultaat wordt neergezet
+     * @param bestandsNaam naam van resultaat bestand
+     * @param sql          query
+     * @param params       optionele prepared statement params
+     * @return aantal verwerkte records of -1 in geval van een fout
+     */
+    private long queryToJson(File workDir, String bestandsNaam, String sql, String... params) {
         long count = -1;
         try (Connection c = ConfigUtil.getDataSourceRsgb().getConnection()) {
             c.setReadOnly(true);
-            // gebruik evt json functie om json uit de database te krijgen
-            // zie: https://www.postgresql.org/docs/9.6/static/functions-json.html
-            // en https://stackoverflow.com/questions/24006291/postgresql-return-result-set-as-json-array
 
-            // zie: https://www.postgresql.org/docs/9.6/static/rangetypes.html
-            // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief, maar niet in de archief tabel met een datum voor "van".
-            StringBuilder sql = new StringBuilder("select ")
-                    .append("kad_identif")
-                    .append(",dat_beg_geldh")
-                    .append(" from kad_onrrnd_zk where '[")
-                    .append(df.format(van))
-                    .append(",")
-                    .append(df.format(tot))
-                    .append("]'::daterange @> dat_beg_geldh::date ")
-                    .append(" and kad_identif not in (select kad_identif from kad_onrrnd_zk_archief where '")
-                    .append(df.format(van))
-                    .append("'::date < dat_beg_geldh::date)");
-
-            try (PreparedStatement stm = c.prepareStatement(sql.toString())) {
-                stm.setFetchDirection(ResultSet.FETCH_FORWARD);
-                stm.setFetchSize(1000);
-
-                LOG.trace(stm);
-                try (ResultSet r = stm.executeQuery()) {
-                    PrintWriter w = new PrintWriter(
-                            new OutputStreamWriter(
-                                    new BufferedOutputStream(
-                                            new FileOutputStream(workDir + File.separator + "NieuweOnroerendGoed.csv")),
-                                    "UTF-8")
-                    );
-                    count = 0;
-                    while (r.next()) {
-                        count++;
-                        w.append(r.getString(1))
-                                .append(",")
-                                .append(r.getString(2))
-                                .println();
-                    }
-                    w.flush();
-                    w.close();
+            try (PreparedStatement stm = c.prepareStatement(sql)) {
+                int index = 0;
+                for (String p : params) {
+                    stm.setString(index++, p);
                 }
 
-            }
-            LOG.debug("aantal nieuwe onroerende zaken is: " + count);
-        }
-        return count;
+                stm.setFetchDirection(ResultSet.FETCH_FORWARD);
+                stm.setFetchSize(1000);
+                LOG.trace(stm);
 
+                SimpleModule module = new SimpleModule();
+                ResultSetSerializer serializer = new ResultSetSerializer();
+                ObjectMapper mapper = new ObjectMapper();
+
+                try (ResultSet r = stm.executeQuery()) {
+                    module.addSerializer(serializer);
+                    mapper.registerModule(module);
+                    ObjectNode objectNode = mapper.createObjectNode();
+                    objectNode.putPOJO("results", r);
+
+                    mapper.writeValue(new FileOutputStream(workDir + File.separator + bestandsNaam), objectNode);
+                }
+                count = serializer.getCount();
+            }
+
+        } catch (SQLException | FileNotFoundException | ResultSetSerializerException e) {
+            LOG.error(
+                    String.format("Fout tijdens ophalen en uitschrijven gegevens (sql: %s, bestand: %s %s",
+                            sql,
+                            workDir,
+                            bestandsNaam)
+                    , e);
+        } finally {
+            return count;
+        }
     }
 
     /**
@@ -174,6 +197,12 @@ public class MutatiesActionBean implements ActionBean {
      */
     private long getGekoppeldeObjecten() {
         long count = -1;
+
+        /* TODO
+        - lijst van nieuwe percelen
+        - adres
+        - bagid adresaanduiding
+         */
         return count;
     }
 
@@ -182,6 +211,8 @@ public class MutatiesActionBean implements ActionBean {
      */
     private long getVervallenOnroerendGoed() {
         long count = -1;
+        // mogelijk snelst om </empty> berichten in de periode op te zoeken in de staging? daar hant de objectref aan.
+
         return count;
     }
 
@@ -190,6 +221,7 @@ public class MutatiesActionBean implements ActionBean {
      */
     private long getGewijzigdeOpp() {
         long count = -1;
+        // alle percelen die aangepast zijn in de periode waarvan de oppervlakte van de oudste en de jongste een verschillende oppervlakte hebben
         return count;
     }
 
