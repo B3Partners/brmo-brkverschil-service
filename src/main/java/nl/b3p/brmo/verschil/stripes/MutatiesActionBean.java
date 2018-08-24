@@ -74,7 +74,8 @@ public class MutatiesActionBean implements ActionBean {
         LOG.debug("aantal nieuwe onroerende zaken is: " + nwOnrrgd);
         long verkopen = this.getVerkopen(workDir);
         LOG.debug("aantal verkopen: " + verkopen);
-
+        long vervallen = this.getVervallenOnroerendGoed(workDir);
+        LOG.debug("aantal vervallen: " + vervallen);
 
         // zippen resultaat in workZip
         try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(workZip.toPath()))) {
@@ -104,9 +105,8 @@ public class MutatiesActionBean implements ActionBean {
             }
         }.setFilename("mutaties_" + df.format(van) + "_" + df.format(tot) + ".zip")
                 .setLastModified(tot.getTime())
-                .setAttachment(false)
                 //.setLength(copied)
-                ;
+                .setAttachment(false);
     }
 
     /**
@@ -116,10 +116,9 @@ public class MutatiesActionBean implements ActionBean {
      * @return aantal nieuw
      */
     private long getNieuweOnroerendGoed(File workDir) {
-        StringBuilder sql = new StringBuilder("SELECT ")
-                .append("distinct o.kad_identif, ")
+        StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
+                .append("o.kad_identif, ")
                 .append("o.dat_beg_geldh, ")
-                // TODO kadastrale aanduiding? (kadastraal object nummer) evt samenvoegen
                 .append("q.ka_kad_gemeentecode, ")
                 .append("q.ka_perceelnummer, ")
                 .append("q.ka_deelperceelnummer, ")
@@ -136,40 +135,40 @@ public class MutatiesActionBean implements ActionBean {
                 // TODO kolom: "ontstaan uit"
                 .append("from kad_onrrnd_zk o ")
                 // samengestelde app_re en kad_perceel als q
-                .append("left join (select  ")
+                .append("LEFT JOIN (SELECT  ")
                 .append("ar.sc_kad_identif, ")
                 .append("ar.ka_kad_gemeentecode, ")
                 .append("ar.ka_perceelnummer, ")
-                .append("null as ka_deelperceelnummer, ")
+                .append("null AS ka_deelperceelnummer, ")
                 .append("ar.ka_sectie, ")
                 .append("ar.ka_appartementsindex, ")
-                .append("null as grootte_perceel, ")
-                .append("null as x, ")
-                .append("null as y ")
-                .append("from app_re ar ")
-                .append("union all select ")
+                .append("null AS grootte_perceel, ")
+                .append("null AS x, ")
+                .append("null AS y ")
+                .append("FROM app_re ar ")
+                .append("UNION ALL SELECT ")
                 .append("p.sc_kad_identif, ")
                 .append("p.ka_kad_gemeentecode, ")
                 .append("p.ka_perceelnummer, ")
                 .append("p.ka_deelperceelnummer, ")
                 .append("p.ka_sectie, ")
-                .append("null as ka_appartementsindex, ")
+                .append("null AS ka_appartementsindex, ")
                 .append("p.grootte_perceel, ")
-                .append("ST_X(p.plaatscoordinaten_perceel) as x, ")
-                .append("ST_Y(p.plaatscoordinaten_perceel) as y ")
-                .append("from kad_perceel p) q ")
+                .append("ST_X(p.plaatscoordinaten_perceel) AS x, ")
+                .append("ST_Y(p.plaatscoordinaten_perceel) AS y ")
+                .append("FROM kad_perceel p) q ")
                 // einde samenstelling app_re en kad_perceel als q
-                .append("on o.kad_identif=q.sc_kad_identif ")
+                .append("ON o.kad_identif=q.sc_kad_identif ")
                 // zakelijk recht erbij
-                .append("left join zak_recht z on o.kad_identif=z.fk_7koz_kad_identif ")
-                .append("left join aard_verkregen_recht avr on z.fk_3avr_aand=avr.aand ")
+                .append("LEFT JOIN zak_recht z ON o.kad_identif=z.fk_7koz_kad_identif ")
+                .append("LEFT JOIN aard_verkregen_recht avr ON z.fk_3avr_aand=avr.aand ")
                 // BKP erbij
-                .append("join belastingplichtige b on ( ")
+                .append("JOIN belastingplichtige b ON ( ")
                 .append("q.ka_kad_gemeentecode=b.ka_kad_gemeentecode ")
-                .append("and q.ka_sectie=b.ka_sectie ")
-                .append("and q.ka_perceelnummer=b.ka_perceelnummer ")
-                .append("and coalesce(q.ka_deelperceelnummer,'')=coalesce(b.ka_deelperceelnummer,'') ")
-                .append("and coalesce(q.ka_appartementsindex,'')=coalesce(b.ka_appartementsindex,'') )")
+                .append("AND q.ka_sectie=b.ka_sectie ")
+                .append("AND q.ka_perceelnummer=b.ka_perceelnummer ")
+                .append("AND coalesce(q.ka_deelperceelnummer,'')=coalesce(b.ka_deelperceelnummer,'') ")
+                .append("AND coalesce(q.ka_appartementsindex,'')=coalesce(b.ka_appartementsindex,'') )")
                 // zie: https://www.postgresql.org/docs/9.6/static/rangetypes.html
                 // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief, maar niet in de archief tabel met een datum voor "van".
                 .append("WHERE '[")
@@ -177,10 +176,10 @@ public class MutatiesActionBean implements ActionBean {
                 .append(",")
                 .append(df.format(tot))
                 .append("]'::daterange @> dat_beg_geldh::date ")
-                .append(" and kad_identif not in (select kad_identif from kad_onrrnd_zk_archief where '")
+                .append("AND kad_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
                 .append(df.format(van))
                 .append("'::date < dat_beg_geldh::date) ")
-                .append("and z.fk_8pes_sc_identif is not null");
+                .append("AND z.fk_8pes_sc_identif IS NOT null");
 
         return queryToJson(workDir, "NieuweOnroerendGoed.json", sql.toString());
     }
@@ -190,33 +189,68 @@ public class MutatiesActionBean implements ActionBean {
      * ophalen gekoppelde objecten [2.4]
      */
     private long getGekoppeldeObjecten() {
-        long count = -1;
-
         /* TODO
         - lijst van nieuwe percelen
         - adres
         - bagid adresaanduiding
          */
-        return count;
+        return -1;
     }
 
     /**
      * ophalen vervallen percelen en appartementsrechten. [2.5]
+     *
+     * @param workDir directory waar json resultaat wordt neergezet
+     * @return aantal vervallen
      */
-    private long getVervallenOnroerendGoed() {
-        long count = -1;
-        // mogelijk snelst om </empty> berichten in de periode op te zoeken in de staging? daar hant de objectref aan.
+    private long getVervallenOnroerendGoed(File workDir) {
+        StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (k.kad_identif)")
+                .append("k.kad_identif, ")
+                .append("k.datum_einde_geldh, ")
+                //
+                .append("q.ka_kad_gemeentecode, ")
+                .append("q.ka_sectie, ")
+                .append("q.ka_perceelnummer, ")
+                .append("q.ka_deelperceelnummer, ")
+                .append("q.ka_appartementsindex ")
+                //
+                .append("FROM kad_onrrnd_zk_archief k ")
+                // samengestelde app_re en kad_perceel als q
+                .append("LEFT JOIN (SELECT  ")
+                .append("ar.sc_kad_identif, ")
+                .append("ar.ka_kad_gemeentecode, ")
+                .append("ar.ka_perceelnummer, ")
+                .append("null AS ka_deelperceelnummer, ")
+                .append("ar.ka_sectie, ")
+                .append("ar.ka_appartementsindex ")
+                .append("FROM app_re_archief ar ")
+                .append("UNION ALL SELECT ")
+                .append("p.sc_kad_identif, ")
+                .append("p.ka_kad_gemeentecode, ")
+                .append("p.ka_perceelnummer, ")
+                .append("p.ka_deelperceelnummer, ")
+                .append("p.ka_sectie, ")
+                .append("null AS ka_appartementsindex ")
+                .append("FROM kad_perceel_archief p) q ")
+                // einde samenstelling app_re en kad_perceel als q
+                .append("ON k.kad_identif=q.sc_kad_identif ")
+                .append("WHERE '[")
+                .append(df.format(van))
+                .append(",")
+                .append(df.format(tot))
+                .append("]'::daterange @> k.datum_einde_geldh::date ")
+                .append("AND k.kad_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk) ")
+                .append("ORDER BY k.kad_identif, k.datum_einde_geldh::date DESC");
 
-        return count;
+        return queryToJson(workDir, "VervallenOnroerendGoed.json", sql.toString());
     }
 
     /**
-     * ophalen gewijzigde oppervlakte. [2.6]
+     * ophalen gewijzigde oppervlakte. [2.7]
      */
-    private long getGewijzigdeOpp() {
-        long count = -1;
+    private long getGewijzigdeOpp(File workDir) {
         // alle percelen die aangepast zijn in de periode waarvan de oppervlakte van de oudste en de jongste een verschillende oppervlakte hebben
-        return count;
+        return -1;
     }
 
     /**
@@ -227,7 +261,7 @@ public class MutatiesActionBean implements ActionBean {
      */
     private long getVerkopen(File workDir) {
         StringBuilder sql = new StringBuilder("SELECT ")
-                .append("distinct b.ref_id, ")
+                .append("DISTINCT b.ref_id, ")
                 .append("b.datum::text, ")
                 //
                 .append("q.ka_kad_gemeentecode, ")
@@ -241,51 +275,41 @@ public class MutatiesActionBean implements ActionBean {
                 .append("z.ar_noemer, ")
                 .append("z.fk_3avr_aand, ")
                 .append("avr.omschr_aard_verkregenr_recht ")
-
+                // verkoop + datum
                 .append("FROM ( SELECT brondocument.ref_id, max(brondocument.datum) AS datum FROM brondocument WHERE brondocument.omschrijving = 'Akte van Koop en Verkoop' GROUP BY brondocument.ref_id) b ")
-
                 // samengestelde app_re en kad_perceel als q
-                .append("left join (select  ")
+                .append("LEFT JOIN (SELECT  ")
                 .append("ar.sc_kad_identif, ")
                 .append("ar.ka_kad_gemeentecode, ")
                 .append("ar.ka_perceelnummer, ")
-                .append("null as ka_deelperceelnummer, ")
+                .append("null AS ka_deelperceelnummer, ")
                 .append("ar.ka_sectie, ")
-                .append("ar.ka_appartementsindex, ")
-                .append("null as grootte_perceel, ")
-                .append("null as x, ")
-                .append("null as y ")
-                .append("from app_re ar ")
-                .append("union all select ")
+                .append("ar.ka_appartementsindex ")
+                .append("FROM app_re ar ")
+                .append("UNION ALL SELECT ")
                 .append("p.sc_kad_identif, ")
                 .append("p.ka_kad_gemeentecode, ")
                 .append("p.ka_perceelnummer, ")
                 .append("p.ka_deelperceelnummer, ")
                 .append("p.ka_sectie, ")
-                .append("null as ka_appartementsindex, ")
-                .append("p.grootte_perceel, ")
-                .append("ST_X(p.plaatscoordinaten_perceel) as x, ")
-                .append("ST_Y(p.plaatscoordinaten_perceel) as y ")
-                .append("from kad_perceel p) q ")
+                .append("null AS ka_appartementsindex ")
+                .append("FROM kad_perceel p) q ")
                 // einde samenstelling app_re en kad_perceel als q
-                .append("on b.ref_id=q.sc_kad_identif::text ")
-
-                .append("left join zak_recht z on b.ref_id=z.fk_7koz_kad_identif::text ")
-                .append("left join aard_verkregen_recht avr on z.fk_3avr_aand=avr.aand ")
-
-                .append("join belastingplichtige k on ( ")
+                .append("ON b.ref_id=q.sc_kad_identif::text ")
+                .append("LEFT JOIN zak_recht z ON b.ref_id=z.fk_7koz_kad_identif::text ")
+                .append("LEFT JOIN aard_verkregen_recht avr ON z.fk_3avr_aand=avr.aand ")
+                .append("JOIN belastingplichtige k ON ( ")
                 .append("q.ka_kad_gemeentecode=k.ka_kad_gemeentecode ")
-                .append("and q.ka_sectie=k.ka_sectie ")
-                .append("and q.ka_perceelnummer=k.ka_perceelnummer ")
-                .append("and coalesce(q.ka_deelperceelnummer,'')=coalesce(k.ka_deelperceelnummer,'') ")
-                .append("and coalesce(q.ka_appartementsindex,'')=coalesce(k.ka_appartementsindex,'') ) ")
-
+                .append("AND q.ka_sectie=k.ka_sectie ")
+                .append("AND q.ka_perceelnummer=k.ka_perceelnummer ")
+                .append("AND coalesce(q.ka_deelperceelnummer,'')=coalesce(k.ka_deelperceelnummer,'') ")
+                .append("AND coalesce(q.ka_appartementsindex,'')=coalesce(k.ka_appartementsindex,'') ) ")
                 .append("WHERE '[")
                 .append(df.format(van))
                 .append(",")
                 .append(df.format(tot))
                 .append("]'::daterange @> b.datum ")
-                .append("and z.fk_8pes_sc_identif is not null");
+                .append("AND z.fk_8pes_sc_identif IS NOT null");
 
         return queryToJson(workDir, "Verkopen.json", sql.toString());
     }
