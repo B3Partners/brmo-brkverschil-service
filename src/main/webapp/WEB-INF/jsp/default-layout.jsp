@@ -7,14 +7,13 @@
             <title><stripes:layout-component name="title">BRMO BRK verschil service</stripes:layout-component></title>
             <meta charset="utf-8">
             <meta http-equiv="X-UA-Compatible" content="IE=edge">
-            <link rel="stylesheet" type="text/css" href="${contextPath}/styles/main.css" />
-            <link rel="stylesheet" type="text/css" href="${contextPath}/extjs/resources/css/crisp/ext-theme-crisp-all.css">
+            <link href="${contextPath}/styles/main.css" rel="stylesheet">
+            <link href="${contextPath}/styles/ext-theme-crisp-all.css" rel="stylesheet">
             <stripes:layout-component name="html_head"/>
         </head>
         <body class="x-body">
             <div class="header">
-                <h1>B3Partners BRMO</h1>
-                <jsp:include page="/WEB-INF/jsp/common/menu.jsp"/>
+                <h1>B3Partners BRMO BRK verschil service</h1>
             </div>
             <div class="content">
                 <stripes:layout-component name="contents"/>
