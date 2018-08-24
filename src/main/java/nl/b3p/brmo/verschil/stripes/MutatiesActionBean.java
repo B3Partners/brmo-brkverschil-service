@@ -72,6 +72,8 @@ public class MutatiesActionBean implements ActionBean {
         // uitvoeren queries
         long nwOnrrgd = this.getNieuweOnroerendGoed(workDir);
         LOG.debug("aantal nieuwe onroerende zaken is: " + nwOnrrgd);
+        long verkopen = this.getVerkopen(workDir);
+        LOG.debug("aantal verkopen: " + verkopen);
 
 
         // zippen resultaat in workZip
@@ -95,7 +97,7 @@ public class MutatiesActionBean implements ActionBean {
             @Override
             public void stream(HttpServletResponse response) throws Exception {
                 copied = FileUtils.copyFile(workZip, response.getOutputStream());
-                LOG.debug("copied " + copied);
+                LOG.debug("bytes copied: " + copied);
 
                 FileUtils.deleteQuietly(workDir);
                 FileUtils.deleteQuietly(workZip);
@@ -114,83 +116,75 @@ public class MutatiesActionBean implements ActionBean {
      * @return aantal nieuw
      */
     private long getNieuweOnroerendGoed(File workDir) {
-        // zie: https://www.postgresql.org/docs/9.6/static/rangetypes.html
-        // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief, maar niet in de archief tabel met een datum voor "van".
-        StringBuilder sql = new StringBuilder("select ")
-                .append("kad_identif")
-                .append(",dat_beg_geldh")
-                .append(" from kad_onrrnd_zk where '[")
+        StringBuilder sql = new StringBuilder("SELECT ")
+                .append("distinct o.kad_identif, ")
+                .append("o.dat_beg_geldh, ")
+                // TODO kadastrale aanduiding? (kadastraal object nummer) evt samenvoegen
+                .append("q.ka_kad_gemeentecode, ")
+                .append("q.ka_perceelnummer, ")
+                .append("q.ka_deelperceelnummer, ")
+                .append("q.ka_sectie, ")
+                .append("q.ka_appartementsindex, ")
+                .append("q.grootte_perceel, ")
+                .append("q.x, ")
+                .append("q.y, ")
+                .append("b.bsn, ")
+                .append("z.ar_teller, ")
+                .append("z.ar_noemer, ")
+                .append("z.fk_3avr_aand, ")
+                .append("avr.omschr_aard_verkregenr_recht ")
+                // TODO kolom: "ontstaan uit"
+                .append("from kad_onrrnd_zk o ")
+                // samengestelde app_re en kad_perceel als q
+                .append("left join (select  ")
+                .append("ar.sc_kad_identif, ")
+                .append("ar.ka_kad_gemeentecode, ")
+                .append("ar.ka_perceelnummer, ")
+                .append("null as ka_deelperceelnummer, ")
+                .append("ar.ka_sectie, ")
+                .append("ar.ka_appartementsindex, ")
+                .append("null as grootte_perceel, ")
+                .append("null as x, ")
+                .append("null as y ")
+                .append("from app_re ar ")
+                .append("union all select ")
+                .append("p.sc_kad_identif, ")
+                .append("p.ka_kad_gemeentecode, ")
+                .append("p.ka_perceelnummer, ")
+                .append("p.ka_deelperceelnummer, ")
+                .append("p.ka_sectie, ")
+                .append("null as ka_appartementsindex, ")
+                .append("p.grootte_perceel, ")
+                .append("ST_X(p.plaatscoordinaten_perceel) as x, ")
+                .append("ST_Y(p.plaatscoordinaten_perceel) as y ")
+                .append("from kad_perceel p) q ")
+                // einde samenstelling app_re en kad_perceel als q
+                .append("on o.kad_identif=q.sc_kad_identif ")
+                // zakelijk recht erbij
+                .append("left join zak_recht z on o.kad_identif=z.fk_7koz_kad_identif ")
+                .append("left join aard_verkregen_recht avr on z.fk_3avr_aand=avr.aand ")
+                // BKP erbij
+                .append("join belastingplichtige b on ( ")
+                .append("q.ka_kad_gemeentecode=b.ka_kad_gemeentecode ")
+                .append("and q.ka_sectie=b.ka_sectie ")
+                .append("and q.ka_perceelnummer=b.ka_perceelnummer ")
+                .append("and coalesce(q.ka_deelperceelnummer,'')=coalesce(b.ka_deelperceelnummer,'') ")
+                .append("and coalesce(q.ka_appartementsindex,'')=coalesce(b.ka_appartementsindex,'') )")
+                // zie: https://www.postgresql.org/docs/9.6/static/rangetypes.html
+                // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief, maar niet in de archief tabel met een datum voor "van".
+                .append("WHERE '[")
                 .append(df.format(van))
                 .append(",")
                 .append(df.format(tot))
                 .append("]'::daterange @> dat_beg_geldh::date ")
                 .append(" and kad_identif not in (select kad_identif from kad_onrrnd_zk_archief where '")
                 .append(df.format(van))
-                .append("'::date < dat_beg_geldh::date)");
+                .append("'::date < dat_beg_geldh::date) ")
+                .append("and z.fk_8pes_sc_identif is not null");
 
-        /* TODO kolommen:
-         * - oppervlakte
-         * - x-coordinaat
-         * - y-coordinaat
-         * - kadastrale aanduiding? (kadastraal object nummer)
-         * - KPR nummer
-         * - aandeel
-         * - soort recht
-         * - ontstaan uit
-         * via left join app_re en kad_perceel
-         * */
-
-        return queryToJson(workDir, "NieuweOnroerendGoed.csv", sql.toString());
+        return queryToJson(workDir, "NieuweOnroerendGoed.json", sql.toString());
     }
 
-    /**
-     * @param workDir      directory waar json resultaat wordt neergezet
-     * @param bestandsNaam naam van resultaat bestand
-     * @param sql          query
-     * @param params       optionele prepared statement params
-     * @return aantal verwerkte records of -1 in geval van een fout
-     */
-    private long queryToJson(File workDir, String bestandsNaam, String sql, String... params) {
-        long count = -1;
-        try (Connection c = ConfigUtil.getDataSourceRsgb().getConnection()) {
-            c.setReadOnly(true);
-
-            try (PreparedStatement stm = c.prepareStatement(sql)) {
-                int index = 0;
-                for (String p : params) {
-                    stm.setString(index++, p);
-                }
-
-                stm.setFetchDirection(ResultSet.FETCH_FORWARD);
-                stm.setFetchSize(1000);
-                LOG.trace(stm);
-
-                SimpleModule module = new SimpleModule();
-                ResultSetSerializer serializer = new ResultSetSerializer();
-                ObjectMapper mapper = new ObjectMapper();
-
-                try (ResultSet r = stm.executeQuery()) {
-                    module.addSerializer(serializer);
-                    mapper.registerModule(module);
-                    ObjectNode objectNode = mapper.createObjectNode();
-                    objectNode.putPOJO("results", r);
-
-                    mapper.writeValue(new FileOutputStream(workDir + File.separator + bestandsNaam), objectNode);
-                }
-                count = serializer.getCount();
-            }
-
-        } catch (SQLException | FileNotFoundException | ResultSetSerializerException e) {
-            LOG.error(
-                    String.format("Fout tijdens ophalen en uitschrijven gegevens (sql: %s, bestand: %s %s",
-                            sql,
-                            workDir,
-                            bestandsNaam)
-                    , e);
-        } finally {
-            return count;
-        }
-    }
 
     /**
      * ophalen gekoppelde objecten [2.4]
@@ -227,11 +221,123 @@ public class MutatiesActionBean implements ActionBean {
 
     /**
      * ophalen verkopen [2.6].
+     *
+     * @param workDir directory waar json resultaat wordt neergezet
+     * @return aantal verkopen
      */
-    private long getVerkopen() {
-        DataSource rsgb = ConfigUtil.getDataSourceRsgb();
+    private long getVerkopen(File workDir) {
+        StringBuilder sql = new StringBuilder("SELECT ")
+                .append("distinct b.ref_id, ")
+                .append("b.datum::text, ")
+                //
+                .append("q.ka_kad_gemeentecode, ")
+                .append("q.ka_sectie, ")
+                .append("q.ka_perceelnummer, ")
+                .append("q.ka_deelperceelnummer, ")
+                .append("q.ka_appartementsindex, ")
+                //
+                .append("k.bsn, ")
+                .append("z.ar_teller, ")
+                .append("z.ar_noemer, ")
+                .append("z.fk_3avr_aand, ")
+                .append("avr.omschr_aard_verkregenr_recht ")
+
+                .append("FROM ( SELECT brondocument.ref_id, max(brondocument.datum) AS datum FROM brondocument WHERE brondocument.omschrijving = 'Akte van Koop en Verkoop' GROUP BY brondocument.ref_id) b ")
+
+                // samengestelde app_re en kad_perceel als q
+                .append("left join (select  ")
+                .append("ar.sc_kad_identif, ")
+                .append("ar.ka_kad_gemeentecode, ")
+                .append("ar.ka_perceelnummer, ")
+                .append("null as ka_deelperceelnummer, ")
+                .append("ar.ka_sectie, ")
+                .append("ar.ka_appartementsindex, ")
+                .append("null as grootte_perceel, ")
+                .append("null as x, ")
+                .append("null as y ")
+                .append("from app_re ar ")
+                .append("union all select ")
+                .append("p.sc_kad_identif, ")
+                .append("p.ka_kad_gemeentecode, ")
+                .append("p.ka_perceelnummer, ")
+                .append("p.ka_deelperceelnummer, ")
+                .append("p.ka_sectie, ")
+                .append("null as ka_appartementsindex, ")
+                .append("p.grootte_perceel, ")
+                .append("ST_X(p.plaatscoordinaten_perceel) as x, ")
+                .append("ST_Y(p.plaatscoordinaten_perceel) as y ")
+                .append("from kad_perceel p) q ")
+                // einde samenstelling app_re en kad_perceel als q
+                .append("on b.ref_id=q.sc_kad_identif::text ")
+
+                .append("left join zak_recht z on b.ref_id=z.fk_7koz_kad_identif::text ")
+                .append("left join aard_verkregen_recht avr on z.fk_3avr_aand=avr.aand ")
+
+                .append("join belastingplichtige k on ( ")
+                .append("q.ka_kad_gemeentecode=k.ka_kad_gemeentecode ")
+                .append("and q.ka_sectie=k.ka_sectie ")
+                .append("and q.ka_perceelnummer=k.ka_perceelnummer ")
+                .append("and coalesce(q.ka_deelperceelnummer,'')=coalesce(k.ka_deelperceelnummer,'') ")
+                .append("and coalesce(q.ka_appartementsindex,'')=coalesce(k.ka_appartementsindex,'') ) ")
+
+                .append("WHERE '[")
+                .append(df.format(van))
+                .append(",")
+                .append(df.format(tot))
+                .append("]'::daterange @> b.datum ")
+                .append("and z.fk_8pes_sc_identif is not null");
+
+        return queryToJson(workDir, "Verkopen.json", sql.toString());
+    }
+
+    /**
+     * Voert de sql query uit en schrijft het resultaat in het bestand in json formaat.
+     *
+     * @param workDir      directory waar json resultaat wordt neergezet
+     * @param bestandsNaam naam van resultaat bestand
+     * @param sql          query
+     * @param params       optionele prepared statement params
+     * @return aantal verwerkte records of -1 in geval van een fout
+     */
+    private long queryToJson(File workDir, String bestandsNaam, String sql, String... params) {
         long count = -1;
-        return count;
+        try (Connection c = ConfigUtil.getDataSourceRsgb().getConnection()) {
+            c.setReadOnly(true);
+
+            try (PreparedStatement stm = c.prepareStatement(sql)) {
+                int index = 0;
+                for (String p : params) {
+                    stm.setString(index++, p);
+                }
+
+                stm.setFetchDirection(ResultSet.FETCH_FORWARD);
+                stm.setFetchSize(1000);
+                LOG.trace(stm);
+
+                SimpleModule module = new SimpleModule();
+                ResultSetSerializer serializer = new ResultSetSerializer();
+                ObjectMapper mapper = new ObjectMapper();
+
+                try (ResultSet r = stm.executeQuery()) {
+                    module.addSerializer(serializer);
+                    mapper.registerModule(module);
+                    ObjectNode objectNode = mapper.createObjectNode();
+                    objectNode.putPOJO("results", r);
+                    mapper.writeValue(new FileOutputStream(workDir + File.separator + bestandsNaam), objectNode);
+                }
+                count = serializer.getCount();
+            }
+
+        } catch (SQLException | FileNotFoundException | ResultSetSerializerException e) {
+            LOG.error(
+                    String.format("Fout tijdens ophalen en uitschrijven gegevens (sql: %s, bestand: %s %s",
+                            sql,
+                            workDir,
+                            bestandsNaam)
+                    , e);
+        } finally {
+            return count;
+        }
     }
 
     public ActionBeanContext getContext() {

@@ -19,7 +19,7 @@
     </logger>
     <root>
         <level value="info"/>
-        <!--<appender-ref ref="consoleAppender" />-->
+        <appender-ref ref="consoleAppender" />
         <appender-ref ref="file"/>
     </root>
 </log4j:configuration>

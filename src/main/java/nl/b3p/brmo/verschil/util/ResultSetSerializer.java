@@ -7,21 +7,19 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.math.BigDecimal;
+import java.sql.*;
 
 public class ResultSetSerializer extends JsonSerializer<ResultSet> {
     private static final Log LOG = LogFactory.getLog(ResultSetSerializer.class);
-    private int count = -1;
+    private long count = -1;
 
     /**
      * Geeft, na serialisatie, het aantal verwerkte records.
      *
      * @return aatntal verwerkte records, {@code -1} in geval van een fout.
      */
-    public int getCount() {
+    public long getCount() {
         return this.count;
     }
 
@@ -32,7 +30,7 @@ public class ResultSetSerializer extends JsonSerializer<ResultSet> {
 
     @Override
     public void serialize(ResultSet resultSet, JsonGenerator gen, SerializerProvider serializers) throws ResultSetSerializerException {
-        int counted = 0;
+        long counted = 0;
         try {
             ResultSetMetaData metaData = resultSet.getMetaData();
             int numCols = metaData.getColumnCount();
@@ -48,7 +46,13 @@ public class ResultSetSerializer extends JsonSerializer<ResultSet> {
                 boolean b;
                 long l;
                 double d;
+                BigDecimal bd;
+                gen.writeStartObject();
+
                 for (int i = 0; i < colNames.length; i++) {
+                    LOG.trace("veld naar json: " + colNames[i] + " (" + colTypes[i] + "): " + resultSet.getObject(i + 1));
+                    gen.writeFieldName(colNames[i]);
+
                     switch (colTypes[i]) {
                         case Types.INTEGER:
                         case Types.BIGINT:
@@ -70,7 +74,12 @@ public class ResultSetSerializer extends JsonSerializer<ResultSet> {
                             break;
                         case Types.DECIMAL:
                         case Types.NUMERIC:
-                            gen.writeNumber(resultSet.getBigDecimal(i + 1));
+                            bd = resultSet.getBigDecimal(i + 1);
+                            if (resultSet.wasNull()) {
+                                gen.writeNull();
+                            } else {
+                                gen.writeNumber(bd);
+                            }
                             break;
                         case Types.FLOAT:
                         case Types.DOUBLE:
@@ -103,22 +112,38 @@ public class ResultSetSerializer extends JsonSerializer<ResultSet> {
                         case Types.TIMESTAMP:
                             serializers.defaultSerializeDateValue(resultSet.getTime(i + 1), gen);
                             break;
-                        // TODO er missen nog wat types
                         case Types.BINARY:
                         case Types.VARBINARY:
+                        case Types.LONGVARBINARY:
                             gen.writeBinary(resultSet.getBytes(i + 1));
                             break;
+                        case Types.BLOB:
+                            Blob blob = resultSet.getBlob(i + 1);
+                            serializers.defaultSerializeValue(blob.getBinaryStream(), gen);
+                            blob.free();
+                            break;
+                        case Types.CLOB:
+                            Clob clob = resultSet.getClob(i);
+                            serializers.defaultSerializeValue(clob.getCharacterStream(), gen);
+                            clob.free();
+                            break;
+                        // TODO er missen nog wat types
+                        case Types.ARRAY:
+                        case Types.STRUCT:
+                        case Types.DISTINCT:
+                        case Types.REF:
+                            throw new NotImplementedException("ResultSetSerializer (nog) niet geimplementeerd voor SQL type: " + colTypes[i]);
                         case Types.JAVA_OBJECT:
                         default:
                             serializers.defaultSerializeValue(resultSet.getObject(i + 1), gen);
                     }
-                    counted++;
-                    gen.writeEndObject();
                 }
-                gen.writeEndArray();
-                this.count = counted;
+                counted++;
+                gen.writeEndObject();
             }
-        } catch (SQLException | IOException e) {
+            gen.writeEndArray();
+            this.count = counted;
+        } catch (SQLException | IOException | RuntimeException e) {
             LOG.error(e);
             throw new ResultSetSerializerException(e);
         }
