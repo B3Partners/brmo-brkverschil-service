@@ -6,7 +6,7 @@ CREATE TABLE public.belastingplichtige (
   ka_perceelnummer character varying(15), -- Groepsattribuut Kadastrale aanduiding APPARTEMENTSRECHT.Perceelnummer - Perceelnummer
   ka_deelperceelnummer character varying(4), -- Groepsattribuut Kadastrale aanduiding KADASTRAAL PERCEEL.Deelperceelnummer - Deelperceelnummer
   ka_appartementsindex character varying(4), -- Groepsattribuut Kadastrale aanduiding APPARTEMENTSRECHT.Appartementsindex - Appartementsindex
-  bsn numeric(9,0), -- N9 - Burgerservicenummer
+  kpr_nummer numeric(9,0), -- KPR nummer
   id bigserial NOT NULL
 )
 WITH (
@@ -21,4 +21,4 @@ COMMENT ON COLUMN public.belastingplichtige.ka_sectie IS 'Groepsattribuut Kadast
 COMMENT ON COLUMN public.belastingplichtige.ka_perceelnummer IS 'Groepsattribuut Kadastrale aanduiding APPARTEMENTSRECHT.Perceelnummer - Perceelnummer';
 COMMENT ON COLUMN public.belastingplichtige.ka_deelperceelnummer IS 'Groepsattribuut Kadastrale aanduiding KADASTRAAL PERCEEL.Deelperceelnummer - Deelperceelnummer';
 COMMENT ON COLUMN public.belastingplichtige.ka_appartementsindex IS 'Groepsattribuut Kadastrale aanduiding APPARTEMENTSRECHT.Appartementsindex - Appartementsindex';
-COMMENT ON COLUMN public.belastingplichtige.bsn IS 'N9 - Burgerservicenummer';
+COMMENT ON COLUMN public.belastingplichtige.kpr_nummer IS 'KPR nummer';

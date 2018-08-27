@@ -142,12 +142,12 @@ public class MutatiesActionBean implements ActionBean {
                 .append("q.grootte_perceel, ")
                 .append("q.x, ")
                 .append("q.y, ")
-                .append("b.bsn, ")
+                .append("b.kpr_nummer, ")
                 .append("z.ar_teller, ")
                 .append("z.ar_noemer, ")
                 .append("z.fk_3avr_aand, ")
-                .append("avr.omschr_aard_verkregenr_recht ")
-                // TODO kolom: "ontstaan uit"
+                .append("avr.omschr_aard_verkregenr_recht, ")
+                .append("h.fk_sc_rh_koz_kad_identif AS ontstaan_uit ")
                 .append("from kad_onrrnd_zk o ")
                 // samengestelde app_re en kad_perceel als q
                 .append("LEFT JOIN (SELECT  ")
@@ -176,16 +176,19 @@ public class MutatiesActionBean implements ActionBean {
                 .append("ON o.kad_identif=q.sc_kad_identif ")
                 // zakelijk recht erbij
                 .append("LEFT JOIN zak_recht z ON o.kad_identif=z.fk_7koz_kad_identif ")
+                // soort recht omschrijving
                 .append("LEFT JOIN aard_verkregen_recht avr ON z.fk_3avr_aand=avr.aand ")
+                // ontstaan uit
+                .append("LEFT JOIN kad_onrrnd_zk_his_rel h ON o.kad_identif=h.fk_sc_lh_koz_kad_identif ")
                 // BKP erbij
                 .append("JOIN belastingplichtige b ON ( ")
-                .append("q.ka_kad_gemeentecode=b.ka_kad_gemeentecode ")
-                .append("AND q.ka_sectie=b.ka_sectie ")
-                .append("AND q.ka_perceelnummer=b.ka_perceelnummer ")
-                .append("AND coalesce(q.ka_deelperceelnummer,'')=coalesce(b.ka_deelperceelnummer,'') ")
-                .append("AND coalesce(q.ka_appartementsindex,'')=coalesce(b.ka_appartementsindex,'') )")
-                // zie: https://www.postgresql.org/docs/9.6/static/rangetypes.html
-                // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief, maar niet in de archief tabel met een datum voor "van".
+                .append("  q.ka_kad_gemeentecode=b.ka_kad_gemeentecode ")
+                .append("  AND q.ka_sectie=b.ka_sectie ")
+                .append("  AND q.ka_perceelnummer=b.ka_perceelnummer ")
+                .append("  AND coalesce(q.ka_deelperceelnummer,'')=coalesce(b.ka_deelperceelnummer,'') ")
+                .append("  AND coalesce(q.ka_appartementsindex,'')=coalesce(b.ka_appartementsindex,'') )")
+                // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief,
+                // maar niet in de archief tabel met een datum voor "van".
                 .append("WHERE '[")
                 .append(df.format(van))
                 .append(",")
@@ -298,7 +301,7 @@ public class MutatiesActionBean implements ActionBean {
                 .append("q.ka_deelperceelnummer, ")
                 .append("q.ka_appartementsindex, ")
                 //
-                .append("k.bsn, ")
+                .append("k.kpr_nummer, ")
                 .append("z.ar_teller, ")
                 .append("z.ar_noemer, ")
                 .append("z.fk_3avr_aand, ")

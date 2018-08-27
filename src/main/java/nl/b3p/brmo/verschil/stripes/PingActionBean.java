@@ -2,39 +2,38 @@ package nl.b3p.brmo.verschil.stripes;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.validation.Validate;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.Date;
 
 /**
- * ping actionbean. {@code /rest/ping?end=2008-04-12}.
+ * ping actionbean. {@code /rest/ping?tot=2008-04-12}.
  */
 @RestActionBean
 @UrlBinding("/rest/ping")
 public class PingActionBean implements ActionBean {
-    private static final Log LOG = LogFactory.getLog(PingActionBean.class);
-
     private ActionBeanContext context;
 
     @Validate
-    private Date end = new Date();
+    private Date tot = new Date();
 
     @GET
     @DefaultHandler
     public Resolution get() {
-        LOG.debug("received get, datum: " + end);
-        String[] j = new String[]{"get done!", end.toString()};
-
-        return new JsonResolution(j);
+        return new StreamingResolution("application/json") {
+            @Override
+            public void stream(HttpServletResponse response) throws Exception {
+                response.getOutputStream().print("{\"pong\":" + tot.getTime() + "}");
+            }
+        }.setLastModified(tot.getTime());
     }
 
-    public Date getEnd() {
-        return end;
+    public Date getTot() {
+        return tot;
     }
 
-    public void setEnd(Date end) {
-        this.end = end;
+    public void setTot(Date end) {
+        this.tot = end;
     }
 
     public ActionBeanContext getContext() {
