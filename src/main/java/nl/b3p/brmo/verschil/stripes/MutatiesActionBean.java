@@ -16,27 +16,25 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.sql.DataSource;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * Mutaties actionbean. Voorbeeld url: {@code /rest/mutaties?van=2018-08-01} of
+ * Mutaties actionbean. Haalt mutaties uit de BRMO RSGB database voor de gegeven
+ * periode.
+ * <br> Voorbeeld url: {@code /rest/mutaties?van=2018-08-01} of
  * {@code /rest/mutaties?van=2018-08-01&tot=2018-09-01} .
+ *
+ * @author mark
+ * @since 1.0
  */
 @RestActionBean
 @UrlBinding("/rest/{location}")
@@ -50,16 +48,28 @@ public class MutatiesActionBean implements ActionBean {
     @Validate
     private Date van;
     /**
-     * optionele datum einde periode. Datum in yyyy-mm-dd formaat.
+     * optionele datum einde periode, default is datum van aanroepen. Datum in
+     * yyyy-mm-dd formaat.
      */
     @Validate
     private Date tot = new Date();
+
+    /**
+     * optionele format parameter, default is {@code json}.
+     */
+    @Validate
+    private String f = "json";
+
     private ActionBeanContext context;
     private long copied;
 
     @GET
     @DefaultHandler
     public Resolution get() throws IOException {
+        LOG.trace("get met params: van=" + van + " tot=" + tot);
+        if (van == null) {
+            return new ErrorResolution(500, "De verplichte parameter `van` ontbreekt.");
+        }
         LOG.debug("get met params: van=" + df.format(van) + " tot=" + df.format(tot));
 
         // maak werkdirectory en werkbestand
@@ -74,8 +84,13 @@ public class MutatiesActionBean implements ActionBean {
         LOG.debug("aantal nieuwe onroerende zaken is: " + nwOnrrgd);
         long verkopen = this.getVerkopen(workDir);
         LOG.debug("aantal verkopen: " + verkopen);
+
         long vervallen = this.getVervallenOnroerendGoed(workDir);
         LOG.debug("aantal vervallen: " + vervallen);
+
+        // 2.9
+        long bsn = this.getBSNAangevuld(workDir);
+        LOG.debug("aantal aangepast bsn: " + bsn);
 
         // zippen resultaat in workZip
         try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(workZip.toPath()))) {
@@ -112,7 +127,7 @@ public class MutatiesActionBean implements ActionBean {
     /**
      * ophalen nieuwe percelen en appartementsrechten. [2.3].
      *
-     * @param workDir directory waar json resultaat wordt neergezet
+     * @param workDir directory waar resultaat wordt neergezet
      * @return aantal nieuw
      */
     private long getNieuweOnroerendGoed(File workDir) {
@@ -175,15 +190,21 @@ public class MutatiesActionBean implements ActionBean {
                 .append(df.format(van))
                 .append(",")
                 .append(df.format(tot))
-                .append("]'::daterange @> dat_beg_geldh::date ")
+                .append("]'::DATERANGE @> dat_beg_geldh::date ")
                 .append("AND kad_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
                 .append(df.format(van))
                 .append("'::date < dat_beg_geldh::date) ")
                 .append("AND z.fk_8pes_sc_identif IS NOT null");
 
-        return queryToJson(workDir, "NieuweOnroerendGoed.json", sql.toString());
-    }
+        switch (f) {
+            case "csv":
+                return queryToCSV(workDir, "NieuweOnroerendGoed.csv", sql.toString());
+            case "json":
+            default:
+                return queryToJson(workDir, "NieuweOnroerendGoed.json", "nieuw", sql.toString());
+        }
 
+    }
 
     /**
      * ophalen gekoppelde objecten [2.4]
@@ -200,7 +221,7 @@ public class MutatiesActionBean implements ActionBean {
     /**
      * ophalen vervallen percelen en appartementsrechten. [2.5]
      *
-     * @param workDir directory waar json resultaat wordt neergezet
+     * @param workDir directory waar resultaat wordt neergezet
      * @return aantal vervallen
      */
     private long getVervallenOnroerendGoed(File workDir) {
@@ -238,11 +259,18 @@ public class MutatiesActionBean implements ActionBean {
                 .append(df.format(van))
                 .append(",")
                 .append(df.format(tot))
-                .append("]'::daterange @> k.datum_einde_geldh::date ")
+                .append("]'::DATERANGE @> k.datum_einde_geldh::date ")
                 .append("AND k.kad_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk) ")
                 .append("ORDER BY k.kad_identif, k.datum_einde_geldh::date DESC");
 
-        return queryToJson(workDir, "VervallenOnroerendGoed.json", sql.toString());
+        switch (f) {
+            case "csv":
+                return queryToCSV(workDir, "VervallenOnroerendGoed.csv", sql.toString());
+            case "json":
+            default:
+                return queryToJson(workDir, "VervallenOnroerendGoed.json", "vervallen", sql.toString());
+        }
+
     }
 
     /**
@@ -256,7 +284,7 @@ public class MutatiesActionBean implements ActionBean {
     /**
      * ophalen verkopen [2.6].
      *
-     * @param workDir directory waar json resultaat wordt neergezet
+     * @param workDir directory waar resultaat wordt neergezet
      * @return aantal verkopen
      */
     private long getVerkopen(File workDir) {
@@ -308,23 +336,77 @@ public class MutatiesActionBean implements ActionBean {
                 .append(df.format(van))
                 .append(",")
                 .append(df.format(tot))
-                .append("]'::daterange @> b.datum ")
+                .append("]'::DATERANGE @> b.datum ")
                 .append("AND z.fk_8pes_sc_identif IS NOT null");
 
-        return queryToJson(workDir, "Verkopen.json", sql.toString());
+        switch (f) {
+            case "csv":
+                return queryToCSV(workDir, "Verkopen.csv", sql.toString());
+            case "json":
+            default:
+                return queryToJson(workDir, "Verkopen.json", "verkopen", sql.toString());
+        }
     }
 
     /**
-     * Voert de sql query uit en schrijft het resultaat in het bestand in json formaat.
+     * nieuwe subjecten. [2.8].
+     *
+     * @param workDir directory waar resultaat wordt neergezet
+     * @return aantal nieuwe subjecten
+     */
+    private long getNieuweSubjecten(File workDir) {
+        return -1;
+    }
+
+    /**
+     * [2.9].
+     *
+     * @param workDir directory waar resultaat wordt neergezet
+     * @return aantal bsn bijgewerkt
+     */
+    private long getBSNAangevuld(File workDir) {
+        StringBuilder sql = new StringBuilder("SELECT ")
+                .append("i.bsn, ")
+                .append("h.datum ")
+                // TODO KPR nummer??
+                .append("FROM ingeschr_nat_prs i ")
+                .append("LEFT JOIN herkomst_metadata h ON ")
+                .append("i.sc_identif = h.waarde ")
+                .append("WHERE i.sc_identif IN (SELECT sc_identif FROM ander_nat_prs) ")
+                .append("AND h.tabel='subject' ")
+                .append("AND '[")
+                .append(df.format(van))
+                .append(",")
+                .append(df.format(tot))
+                .append("]'::DATERANGE @> datum::DATE ");
+
+        switch (f) {
+            case "csv":
+                return queryToCSV(workDir, "BsnAangevuld.csv", sql.toString());
+            case "json":
+            default:
+                return queryToJson(workDir, "BsnAangevuld.json", "bsnaangevuld", sql.toString());
+        }
+
+    }
+
+    /**
+     * Voert de sql query uit en schrijft het resultaat in het bestand in json
+     * formaat.
      *
      * @param workDir      directory waar json resultaat wordt neergezet
      * @param bestandsNaam naam van resultaat bestand
-     * @param sql          query
+     * @param resultName   naam van de json node met resultaten, default is
+     *                     {@code results}
+     * @param sql          uit te voeren query
      * @param params       optionele prepared statement params
      * @return aantal verwerkte records of -1 in geval van een fout
      */
-    private long queryToJson(File workDir, String bestandsNaam, String sql, String... params) {
+    private long queryToJson(File workDir, String bestandsNaam, String resultName, String sql, String... params) {
         long count = -1;
+        if (resultName == null) {
+            resultName = "results";
+        }
         try (Connection c = ConfigUtil.getDataSourceRsgb().getConnection()) {
             c.setReadOnly(true);
 
@@ -346,7 +428,7 @@ public class MutatiesActionBean implements ActionBean {
                     module.addSerializer(serializer);
                     mapper.registerModule(module);
                     ObjectNode objectNode = mapper.createObjectNode();
-                    objectNode.putPOJO("results", r);
+                    objectNode.putPOJO(resultName, r);
                     mapper.writeValue(new FileOutputStream(workDir + File.separator + bestandsNaam), objectNode);
                 }
                 count = serializer.getCount();
@@ -357,8 +439,72 @@ public class MutatiesActionBean implements ActionBean {
                     String.format("Fout tijdens ophalen en uitschrijven gegevens (sql: %s, bestand: %s %s",
                             sql,
                             workDir,
-                            bestandsNaam)
-                    , e);
+                            bestandsNaam), e);
+        } finally {
+            return count;
+        }
+    }
+
+    private long queryToCSV(File workDir, String bestandsNaam, String sql, String... params) {
+        long count = -1;
+
+        final String NL = System.getProperty("line.separator");
+        final String SEP = ";";
+
+        try (Connection c = ConfigUtil.getDataSourceRsgb().getConnection()) {
+            c.setReadOnly(true);
+
+            try (PreparedStatement stm = c.prepareStatement(sql)) {
+                int index = 0;
+                for (String p : params) {
+                    stm.setString(index++, p);
+                }
+
+                stm.setFetchDirection(ResultSet.FETCH_FORWARD);
+                stm.setFetchSize(1000);
+                LOG.trace(stm);
+
+                try (ResultSet r = stm.executeQuery();
+                     FileOutputStream fos = new FileOutputStream(workDir + File.separator + bestandsNaam);
+                     Writer out = new OutputStreamWriter(new BufferedOutputStream(fos), "UTF-8")) {
+                    ResultSetMetaData metaData = r.getMetaData();
+                    int numCols = metaData.getColumnCount();
+
+
+                    // schrijf kolommen
+                    for (int j = 1; j < (numCols + 1); j++) {
+                        out.append(metaData.getColumnName(j));
+                        if (j < numCols) {
+                            out.append(SEP);
+                        } else {
+                            out.append(NL);
+                        }
+                    }
+
+                    count = 0;
+                    // schrijf data
+                    while (r.next()) {
+                        for (int k = 1; k < (numCols + 1); k++) {
+                            // het zou mooier zijn om de type specifieke getters van de resultset te gebruiken,
+                            // maar uiteindelijk doen we toch een toString() dus resultaat is gelijk.
+                            String o = r.getString(k);
+                            out.append(o != null ? o : "");
+                            if (k < numCols) {
+                                out.append(SEP);
+                            } else {
+                                out.append(NL);
+                            }
+                        }
+                        count++;
+                    }
+                }
+            }
+        } catch (SQLException | FileNotFoundException e) {
+            LOG.error(
+                    String.format("Fout tijdens ophalen en uitschrijven gegevens (sql: %s, bestand: %s %s",
+                            sql,
+                            workDir,
+                            bestandsNaam), e);
         } finally {
             return count;
         }
@@ -386,5 +532,13 @@ public class MutatiesActionBean implements ActionBean {
 
     public void setTot(Date tot) {
         this.tot = tot;
+    }
+
+    public String getF() {
+        return f;
+    }
+
+    public void setF(String f) {
+        this.f = f;
     }
 }
