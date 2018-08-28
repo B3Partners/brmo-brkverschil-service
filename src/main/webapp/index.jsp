@@ -16,8 +16,8 @@
             <li><a href="${contextPath}/rest/mutaties?van=2018-08-01&f=csv">mutaties vanaf 2018-08-01 in csv formaat</li>
             <li><a href="${contextPath}/rest/mutaties?van=2018-08-01&tot=2018-09-01">mutaties vanaf 2018-08-01 tot 2018-09-01</li>
             <li><a href="${contextPath}/rest/mutaties"><strong>foutief verzoek</strong> (geen vanaf datum)</li>
-            <li><a href="${contextPath}/rest/ping" target="_blank">ping endpoint</a></li>
-            <li><a href="${contextPath}/rest/ping?tot=2018-09-01" target="_blank">ping endpoint tot 2018-09-01</a></li>
+            <li><a href="${contextPath}/rest/ping" target="_blank">ping endpoint</a> geeft de datum terug in json</li>
+            <li><a href="${contextPath}/rest/ping?tot=2018-09-01" target="_blank">ping endpoint</a> met "tot 2018-09-01"</li>
         </ul>
     </stripes:layout-component>
 </stripes:layout-render>

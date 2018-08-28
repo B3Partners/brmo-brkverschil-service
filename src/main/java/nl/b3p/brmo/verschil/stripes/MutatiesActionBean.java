@@ -70,7 +70,7 @@ public class MutatiesActionBean implements ActionBean {
         if (van == null) {
             return new ErrorResolution(500, "De verplichte parameter `van` ontbreekt.");
         }
-        LOG.debug("get met params: van=" + df.format(van) + " tot=" + df.format(tot));
+        LOG.info("Uitvoeren opdracht met params: van=" + df.format(van) + " tot=" + df.format(tot));
 
         // maak werkdirectory en werkbestand
         Path workPath = Files.createTempDirectory(Paths.get(System.getProperty("java.io.tmpdir")), "brkmutsvc", PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxr-x---")));
@@ -80,17 +80,24 @@ public class MutatiesActionBean implements ActionBean {
         workZip.deleteOnExit();
 
         // uitvoeren queries
+        // 2.3
         long nwOnrrgd = this.getNieuweOnroerendGoed(workDir);
-        LOG.debug("aantal nieuwe onroerende zaken is: " + nwOnrrgd);
-
+        LOG.info("aantal nieuwe onroerende zaken is: " + nwOnrrgd);
+        // 2.4
         long gekoppeld = this.getGekoppeldeObjecten(workDir);
-        LOG.debug("aantal gekoppelde objecten: "+gekoppeld);
-        long verkopen = this.getVerkopen(workDir);
-        LOG.debug("aantal verkopen: " + verkopen);
-
+        LOG.info("aantal gekoppelde objecten: " + gekoppeld);
+        // 2.5
         long vervallen = this.getVervallenOnroerendGoed(workDir);
-        LOG.debug("aantal vervallen: " + vervallen);
-
+        LOG.info("aantal vervallen: " + vervallen);
+        // 2.6
+        long verkopen = this.getVerkopen(workDir);
+        LOG.info("aantal verkopen: " + verkopen);
+        // 2.7
+        long oppVeranderd = this.getGewijzigdeOpp(workDir);
+        LOG.info("aantal oppervlakte veranderd: " + oppVeranderd);
+        // 2.8
+        long nwSubject = this.getNieuweSubjecten(workDir);
+        LOG.info("aantal nieuwe subjecten: " + nwSubject);
         // 2.9
         long bsn = this.getBSNAangevuld(workDir);
         LOG.debug("aantal aangepast bsn: " + bsn);
@@ -219,6 +226,7 @@ public class MutatiesActionBean implements ActionBean {
      * @return aantal gekoppeld
      */
     private long getGekoppeldeObjecten(File workDir) {
+        // TODO gebruikt v_kad_onrrnd_zk_adres welke pas beschikbaar is in 1.6.0
         StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
                 .append("o.kad_identif, ")
                 .append("adr.gemeentecode, ")
@@ -271,7 +279,7 @@ public class MutatiesActionBean implements ActionBean {
                 //
                 .append("FROM kad_onrrnd_zk_archief k ")
                 // samengestelde app_re en kad_perceel als q
-                .append("LEFT JOIN (SELECT  ")
+                .append("LEFT JOIN (SELECT ")
                 .append("ar.sc_kad_identif, ")
                 .append("ar.ka_kad_gemeentecode, ")
                 .append("ar.ka_perceelnummer, ")
@@ -311,8 +319,46 @@ public class MutatiesActionBean implements ActionBean {
      * ophalen gewijzigde oppervlakte. [2.7]
      */
     private long getGewijzigdeOpp(File workDir) {
-        // alle percelen die aangepast zijn in de periode waarvan de oppervlakte van de oudste en de jongste een verschillende oppervlakte hebben
-        return -1;
+        // jongste archief perceel die in de periode waarvan de
+        // oppervlakte anders is dan het actuele perceel
+        StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (za.kad_identif) ")
+                .append("za.kad_identif, ")
+                .append("za.dat_beg_geldh, ")
+                .append("pa.grootte_perceel AS opp_oud, ")
+                .append("k.grootte_perceel  AS opp_actueel ")
+                .append("FROM kad_onrrnd_zk_archief za, kad_perceel_archief pa, kad_perceel k ")
+                // TODO check of datum logica klopt!
+                // moet in de archief zitten in gevraagde periode
+                .append("WHERE '[")
+                .append(df.format(van))
+                .append(",")
+                .append(df.format(tot))
+                .append("]'::DATERANGE @> za.dat_beg_geldh::DATE ")
+                .append("AND za.dat_beg_geldh    = pa.sc_dat_beg_geldh ")
+                .append("AND za.kad_identif      = pa.sc_kad_identif ")
+                .append("AND za.kad_identif      = k.sc_kad_identif ")
+                .append("AND pa.grootte_perceel != k.grootte_perceel ")
+                // dubbelop vanwege grootte_perceel check
+                // .append("AND za.clazz            = 'KADASTRAAL PERCEEL' ")
+                // moet in de actueel zitten in de periode, anders vervallen of datafout
+                .append("AND za.kad_identif IN ( SELECT kad_identif FROM kad_onrrnd_zk ")
+                // TODO check of datum logica klopt!
+                .append("WHERE '[")
+                .append(df.format(van))
+                .append(",")
+                .append(df.format(tot))
+                .append("]'::DATERANGE @> dat_beg_geldh::DATE ) ")
+                // test geval op 2017-12-22 in TYN
+                // .append("AND za.kad_identif = 57590619170000 ")
+                .append("ORDER BY za.kad_identif, za.dat_beg_geldh DESC");
+
+        switch (f) {
+            case "csv":
+                return queryToCSV(workDir, "GewijzigdeOpp.csv", sql.toString());
+            case "json":
+            default:
+                return queryToJson(workDir, "GewijzigdeOpp.json", "gewijzigdeopp", sql.toString());
+        }
     }
 
     /**
@@ -389,6 +435,7 @@ public class MutatiesActionBean implements ActionBean {
      * @return aantal nieuwe subjecten
      */
     private long getNieuweSubjecten(File workDir) {
+        // TODO
         return -1;
     }
 
@@ -401,8 +448,8 @@ public class MutatiesActionBean implements ActionBean {
     private long getBSNAangevuld(File workDir) {
         StringBuilder sql = new StringBuilder("SELECT ")
                 .append("i.bsn, ")
-                .append("h.datum ")
-                // TODO KPR nummer??
+                .append("h.datum::TEXT ")
+                // TODO KPR nummer?? waar komt dat dan vandaan?
                 .append("FROM ingeschr_nat_prs i ")
                 .append("LEFT JOIN herkomst_metadata h ON ")
                 .append("i.sc_identif = h.waarde ")
@@ -428,12 +475,12 @@ public class MutatiesActionBean implements ActionBean {
      * Voert de sql query uit en schrijft het resultaat in het bestand in json
      * formaat.
      *
-     * @param workDir      directory waar json resultaat wordt neergezet
+     * @param workDir directory waar json resultaat wordt neergezet
      * @param bestandsNaam naam van resultaat bestand
-     * @param resultName   naam van de json node met resultaten, default is
-     *                     {@code results}
-     * @param sql          uit te voeren query
-     * @param params       optionele prepared statement params
+     * @param resultName naam van de json node met resultaten, default is
+     * {@code results}
+     * @param sql uit te voeren query
+     * @param params optionele prepared statement params
      * @return aantal verwerkte records of -1 in geval van een fout
      */
     private long queryToJson(File workDir, String bestandsNaam, String resultName, String sql, String... params) {
@@ -499,11 +546,10 @@ public class MutatiesActionBean implements ActionBean {
                 LOG.trace(stm);
 
                 try (ResultSet r = stm.executeQuery();
-                     FileOutputStream fos = new FileOutputStream(workDir + File.separator + bestandsNaam);
-                     Writer out = new OutputStreamWriter(new BufferedOutputStream(fos), "UTF-8")) {
+                        FileOutputStream fos = new FileOutputStream(workDir + File.separator + bestandsNaam);
+                        Writer out = new OutputStreamWriter(new BufferedOutputStream(fos), "UTF-8")) {
                     ResultSetMetaData metaData = r.getMetaData();
                     int numCols = metaData.getColumnCount();
-
 
                     // schrijf kolommen
                     for (int j = 1; j < (numCols + 1); j++) {
