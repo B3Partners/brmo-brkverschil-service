@@ -82,6 +82,9 @@ public class MutatiesActionBean implements ActionBean {
         // uitvoeren queries
         long nwOnrrgd = this.getNieuweOnroerendGoed(workDir);
         LOG.debug("aantal nieuwe onroerende zaken is: " + nwOnrrgd);
+
+        long gekoppeld = this.getGekoppeldeObjecten(workDir);
+        LOG.debug("aantal gekoppelde objecten: "+gekoppeld);
         long verkopen = this.getVerkopen(workDir);
         LOG.debug("aantal verkopen: " + verkopen);
 
@@ -210,15 +213,43 @@ public class MutatiesActionBean implements ActionBean {
     }
 
     /**
-     * ophalen gekoppelde objecten [2.4]
+     * ophalen gekoppelde objecten [2.4].
+     *
+     * @param workDir directory waar resultaat wordt neergezet
+     * @return aantal gekoppeld
      */
-    private long getGekoppeldeObjecten() {
-        /* TODO
-        - lijst van nieuwe percelen
-        - adres
-        - bagid adresaanduiding
-         */
-        return -1;
+    private long getGekoppeldeObjecten(File workDir) {
+        StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
+                .append("o.kad_identif, ")
+                .append("adr.gemeentecode, ")
+                .append("adr.sectie, ")
+                .append("adr.perceelnummer, ")
+                .append("adr.appartementsindex, ")
+                .append("o.lo_loc__omschr, ")
+                .append("adr.benoemdobj_identif, ")
+                .append("adr.straatnaam, ")
+                .append("adr.huisnummer, ")
+                .append("adr.huisletter, ")
+                .append("adr.huisnummer_toev, ")
+                .append("adr.woonplaats, ")
+                .append("adr.postcode ")
+                .append("FROM kad_onrrnd_zk o ")
+                .append("LEFT JOIN v_kad_onrrnd_zk_adres adr ON adr.koz_identif = o.kad_identif ")
+                .append("WHERE '[")
+                .append(df.format(van))
+                .append(",")
+                .append(df.format(tot))
+                .append("]'::DATERANGE @> dat_beg_geldh::date ")
+                .append("AND kad_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
+                .append(df.format(van))
+                .append("'::date < dat_beg_geldh::date) ");
+        switch (f) {
+            case "csv":
+                return queryToCSV(workDir, "GekoppeldeObjecten.csv", sql.toString());
+            case "json":
+            default:
+                return queryToJson(workDir, "GekoppeldeObjecten.json", "koppeling", sql.toString());
+        }
     }
 
     /**
