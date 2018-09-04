@@ -43,13 +43,14 @@ public class MutatiesActionBean implements ActionBean {
     private static final Log LOG = LogFactory.getLog(MutatiesActionBean.class);
     private final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
     /**
-     * verplichte datum begin periode. Datum in yyyy-mm-dd formaat.
+     * verplichte datum begin periode. Datum in yyyy-mm-dd formaat, de
+     * begindatum is deel van de periode.
      */
     @Validate
     private Date van;
     /**
      * optionele datum einde periode, default is datum van aanroepen. Datum in
-     * yyyy-mm-dd formaat.
+     * yyyy-mm-dd formaat, de einddatum is deel van de periode, dwz. tot-en-met.
      */
     @Validate
     private Date tot = new Date();
@@ -192,7 +193,7 @@ public class MutatiesActionBean implements ActionBean {
                 .append("LEFT JOIN kad_onrrnd_zk_his_rel h ON o.kad_identif=h.fk_sc_lh_koz_kad_identif ")
                 // BKP erbij
                 .append("JOIN belastingplichtige b ON ( ")
-                .append("  q.ka_kad_gemeentecode=b.ka_kad_gemeentecode ")
+                .append("      q.ka_kad_gemeentecode=b.ka_kad_gemeentecode ")
                 .append("  AND q.ka_sectie=b.ka_sectie ")
                 .append("  AND q.ka_perceelnummer=b.ka_perceelnummer ")
                 .append("  AND coalesce(q.ka_deelperceelnummer,'')=coalesce(b.ka_deelperceelnummer,'') ")
@@ -216,7 +217,6 @@ public class MutatiesActionBean implements ActionBean {
             default:
                 return queryToJson(workDir, "NieuweOnroerendGoed.json", "nieuw", sql.toString());
         }
-
     }
 
     /**
@@ -311,7 +311,6 @@ public class MutatiesActionBean implements ActionBean {
             default:
                 return queryToJson(workDir, "VervallenOnroerendGoed.json", "vervallen", sql.toString());
         }
-
     }
 
     /**
@@ -326,7 +325,6 @@ public class MutatiesActionBean implements ActionBean {
                 .append("pa.grootte_perceel AS opp_oud, ")
                 .append("k.grootte_perceel  AS opp_actueel ")
                 .append("FROM kad_onrrnd_zk_archief za, kad_perceel_archief pa, kad_perceel k ")
-                // TODO check of datum logica klopt!
                 // moet in de archief zitten in gevraagde periode
                 .append("WHERE '[")
                 .append(df.format(van))
@@ -341,13 +339,12 @@ public class MutatiesActionBean implements ActionBean {
                 // .append("AND za.clazz            = 'KADASTRAAL PERCEEL' ")
                 // moet in de actueel zitten in de periode, anders vervallen of datafout
                 .append("AND za.kad_identif IN ( SELECT kad_identif FROM kad_onrrnd_zk ")
-                // TODO check of datum logica klopt!
                 .append("WHERE '[")
                 .append(df.format(van))
                 .append(",")
                 .append(df.format(tot))
                 .append("]'::DATERANGE @> dat_beg_geldh::DATE ) ")
-                // test geval op 2017-12-22 in TYN
+                // test geval op 2017-12-22 in Testset
                 // .append("AND za.kad_identif = 57590619170000 ")
                 .append("ORDER BY za.kad_identif, za.dat_beg_geldh DESC");
 
@@ -428,14 +425,75 @@ public class MutatiesActionBean implements ActionBean {
     }
 
     /**
-     * nieuwe subjecten. [2.8].
+     * nieuwe subjecten. [2.8]. De voor het systeem nieuwe subjecten zijn de
+     * subjecten van nieuwe kadastrale objecten die niet aan de
+     * belastingplichtige kunnen worden gekoppeld.
      *
      * @param workDir directory waar resultaat wordt neergezet
      * @return aantal nieuwe subjecten
      */
     private long getNieuweSubjecten(File workDir) {
-        // TODO
-        return -1;
+        StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (o.naam) ")
+                //--o.koz_identif,
+                .append("o.begin_geldigheid, ")
+                /*
+                o.gemeentecode,
+                o.perceelnummer,
+                o.deelperceelnummer,
+                o.sectie,
+                o.appartementsindex,
+                o.aandeel,
+                o.omschr_aard_verkregenr_recht,
+                 */
+                .append("o.soort, ")
+                .append("o.geslachtsnaam, ")
+                .append("o.voorvoegsel, ")
+                .append("o.voornamen, ")
+                .append("o.naam, ")
+                .append("o.woonadres, ")
+                .append("o.geboortedatum, ")
+                .append("o.overlijdensdatum, ")
+                .append("o.bsn, ")
+                .append("o.rsin, ")
+                .append("o.kvk_nummer, ")
+                .append("o.straatnaam, ")
+                .append("o.huisnummer, ")
+                .append("o.huisletter, ")
+                .append("o.huisnummer_toev, ")
+                .append("o.postcode, ")
+                .append("o.woonplaats ")
+                //--b.kpr_nummer
+                .append("FROM vb_koz_rechth o ")
+                // evt mat. view gebruiken .append("FROM mb_koz_rechth o ")
+                .append("LEFT JOIN belastingplichtige b ")
+                .append("ON (")
+                .append("      o.gemeentecode=b.ka_kad_gemeentecode ")
+                .append("  AND o.sectie=b.ka_sectie ")
+                .append("  AND o.perceelnummer=b.ka_perceelnummer ")
+                .append("  AND COALESCE(o.deelperceelnummer,'')=COALESCE(b.ka_deelperceelnummer,'') ")
+                .append("  AND COALESCE(o.appartementsindex,'')=COALESCE(b.ka_appartementsindex,'') )")
+                // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief,
+                // maar niet in de archief tabel met een datum voor "van".
+                .append("WHERE '[")
+                .append(df.format(van))
+                .append(",")
+                .append(df.format(tot))
+                .append("]'::DATERANGE @> o.begin_geldigheid::date ")
+                .append("AND kad_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
+                .append(df.format(van))
+                .append("'::date < dat_beg_geldh::date) ")
+                //-- die niet gekoppeld kunnen worden
+                .append("AND b.kpr_nummer IS NULL ")
+                //-- alleen de eerste naam met de oudste datum
+                .append("ORDER BY o.naam, o.begin_geldigheid ASC");
+
+        switch (f) {
+            case "csv":
+                return queryToCSV(workDir, "NieuweSubjecten.csv", sql.toString());
+            case "json":
+            default:
+                return queryToJson(workDir, "NieuweSubjecten.json", "nieuwe_subjecten", sql.toString());
+        }
     }
 
     /**
@@ -467,7 +525,6 @@ public class MutatiesActionBean implements ActionBean {
             default:
                 return queryToJson(workDir, "BsnAangevuld.json", "bsnaangevuld", sql.toString());
         }
-
     }
 
     /**

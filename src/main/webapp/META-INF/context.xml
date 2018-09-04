@@ -1,40 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Context antiJARLocking="true" path="/brmo-brkverschil-service">
-    <!-- ResourceLink werkt via server.xml van tomcat
-      1. Plaats DataSource Resource xml blokken onder <GlobalNamingResources> in server.xml van tomcat.
-
-      NB. de opties kunnen per Tomcat versie verschillen, zie:
-          https://tomcat.apache.org/tomcat-9.0-doc/jndi-datasource-examples-howto.html
-          https://tomcat.apache.org/tomcat-8.5-doc/jndi-datasource-examples-howto.html
-          daarnaast kunnen database drivers bepaalde eigenschappen wel/niet ondersteunen
-
-      <Resource name="jdbc/brmo/staging"
-          auth="Container"
-          type="javax.sql.DataSource"
-          username="staging"
-          password="**"
-          driverClassName="org.postgresql.Driver"
-          url="jdbc:postgresql://hostname/staging"
-          maxTotal="40"
-          validationQuery="select 1"
-          timeBetweenEvictionRunsMillis="30000"
-          minEvictableIdleTimeMillis="5000"
-      />
-      <Resource name="jdbc/brmo/rsgb"
-          auth="Container"
-          type="javax.sql.DataSource"
-          username="rsgb"
-          password="**"
-          driverClassName="org.postgresql.Driver"
-          url="jdbc:postgresql://hostname/rsgb"
-          maxTotal="40"
-          validationQuery="select 1"
-          timeBetweenEvictionRunsMillis="30000"
-          minEvictableIdleTimeMillis="5000"
-      />
-
-      2. Plaats postgresql, oracle of sqlserver driver in tomcat lib
-      -->
     <ResourceLink global="jdbc/brmo/rsgb" name="jdbc/brmo/rsgb" type="javax.sql.DataSource"/>
     <ResourceLink global="jdbc/brmo/staging" name="jdbc/brmo/staging" type="javax.sql.DataSource"/>
     <Realm allRolesMode="authOnly" className="org.apache.catalina.realm.DataSourceRealm"

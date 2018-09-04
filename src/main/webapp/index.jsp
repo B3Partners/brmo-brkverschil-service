@@ -6,16 +6,17 @@
         <p>Het rest endpoint <code>${contextPath}/rest/mutaties</code> kan met verschillende parameters 
             aangeroepen worden. De parameters staan in onderstaande lijst beschreven.</p>
         <dl>
-            <dt><strong>van</strong> (verplicht)</dt><dd>datum vanaf in yyyy-mm-dd formaat</dd>
-            <dt><strong>tot</strong> (optioneel)</dt><dd>datum tot in yyyy-mm-dd formaat</dd>
-            <dt><strong>f</strong> (optioneel)</dt><dd>formaat, <code>json</code> of <code>csv</code></dd>
+            <dt><strong>van</strong> (verplicht)</dt><dd>datum vanaf in yyyy-mm-dd formaat, de periode is inclusief deze datum</dd>
+            <dt><strong>tot</strong> (optioneel)</dt><dd>datum tot in yyyy-mm-dd formaat, de periode is inclusief deze datum, default is de actuele datum</dd>
+            <dt><strong>f</strong> (optioneel)</dt><dd>formaat, <code>json</code> of <code>csv</code>, adnere formaten zijn niet beschikbaar</dd>
         </dl>
-        <h3>Voorbeelden</h3>
+        <h3>Voorbeelden van de REST API</h3>
         <ul>
             <li><a href="${contextPath}/rest/mutaties?van=2018-08-01">mutaties vanaf 2018-08-01</li>
             <li><a href="${contextPath}/rest/mutaties?van=2018-08-01&f=csv">mutaties vanaf 2018-08-01 in csv formaat</li>
             <li><a href="${contextPath}/rest/mutaties?van=2018-08-01&tot=2018-09-01">mutaties vanaf 2018-08-01 tot 2018-09-01</li>
             <li><a href="${contextPath}/rest/mutaties"><strong>foutief verzoek</strong> (geen vanaf datum)</li>
+            <li><a href="${contextPath}/rest/mutaties?van=2018-08-01&f=text"><strong>foutief verzoek</strong> (geen geldig formaat)</li>
             <li><a href="${contextPath}/rest/ping" target="_blank">ping endpoint</a> geeft de datum terug in json</li>
             <li><a href="${contextPath}/rest/ping?tot=2018-09-01" target="_blank">ping endpoint</a> met "tot 2018-09-01"</li>
         </ul>

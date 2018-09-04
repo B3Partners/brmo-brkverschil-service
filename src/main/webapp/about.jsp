@@ -12,6 +12,10 @@
     <body class="x-body">
         <div class="header">
             <h1>B3Partners BRMO BRK verschil service</h1>
+            <ul>
+                <li><a href="${contextPath}/index.jsp">Home</a></li>
+                <li><a href="${contextPath}/logout.jsp">Uitloggen</a></li>
+            </ul>
         </div>
         <div class="content">
             <h1>versie informatie</h1>
