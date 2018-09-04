@@ -70,12 +70,13 @@
         <project.build.targetVersion>${java.version}</project.build.targetVersion>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        <test.onlyITs>false</test.onlyITs>
+        <test.skipTs>false</test.skipTs>
+        <test.skipITs>true</test.skipITs>
         <junit.jupiter.version>5.2.0</junit.jupiter.version>
         <junit.platform.version>1.2.0</junit.platform.version>
-        <brmo.version>1.5.2.5</brmo.version>
+        <brmo.version>1.6.0</brmo.version>
         <tomcat.version>7.0.90</tomcat.version>
-        <postgresql.jdbc.version>42.2.4</postgresql.jdbc.version>
+        <postgresql.jdbc.version>42.2.5</postgresql.jdbc.version>
         <maven.surefire.version>2.22.0</maven.surefire.version>
         <jacoco-maven-plugin.version>0.8.2</jacoco-maven-plugin.version>
         <versions-maven-plugin.version>2.5</versions-maven-plugin.version>
@@ -165,7 +166,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.2.4</version>
+            <version>42.2.5</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -243,7 +244,14 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.8.0</version>
                 </plugin>
-
+                <plugin>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
                 <plugin>
                     <artifactId>maven-war-plugin</artifactId>
                     <version>3.2.2</version>
@@ -503,20 +511,18 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <!--<argLine>@{argLine} -XX:+TieredCompilation -XX:TieredStopAtLevel=1</argLine>-->
                     <argLine>@{argLine}</argLine>
                     <trimStackTrace>false</trimStackTrace>
                     <useFile>false</useFile>
                     <excludes>
                         <exclude>**/*IntegrationTest.java</exclude>
                     </excludes>
-                    <skipTests>${test.onlyITs}</skipTests>
+                    <skipTests>${test.skipTs}</skipTests>
                 </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
-                    <!-- -XX:+TieredCompilation -XX:TieredStopAtLevel=1-->
                     <argLine>@{argLine}</argLine>
                     <trimStackTrace>false</trimStackTrace>
                     <useFile>false</useFile>
@@ -526,8 +532,8 @@
                     <systemPropertyVariables/>
                     <trimStackTrace>false</trimStackTrace>
                     <useFile>false</useFile>
-                    <skipTests>!${test.onlyITs}</skipTests>
-                    <skipITs>!${test.onlyITs}</skipITs>
+                    <skipTests>${test.skipITs}</skipTests>
+                    <skipITs>${test.skipITs}</skipITs>
                 </configuration>
                 <executions>
                     <execution>
@@ -586,19 +592,19 @@
                 <reportSets>
                     <reportSet>
                         <reports>
+                            <report>index</report>
+                            <report>summary</report>
+                            <report>issue-management</report>
+                            <report>scm</report>
                             <report>ci-management</report>
                             <report>dependencies</report>
                             <report>dependency-convergence</report>
-                            <report>dependency-info</report>
+                            <!--<report>dependency-info</report>-->
                             <report>dependency-management</report>
-                            <report>index</report>
-                            <report>issue-management</report>
                             <report>licenses</report>
-                            <report>modules</report>
+                            <!--<report>modules</report>-->
                             <report>plugin-management</report>
                             <report>plugins</report>
-                            <report>scm</report>
-                            <report>summary</report>
                             <report>team</report>
                         </reports>
                     </reportSet>
@@ -665,6 +671,8 @@
         <profile>
             <id>postgresql</id>
             <properties>
+                <test.skipTs>false</test.skipTs>
+                <test.skipITs>false</test.skipITs>
             </properties>
             <build>
                 <filters>
@@ -748,8 +756,6 @@
                             <systemPropertyVariables>
                                 <database.properties.file>postgresql.properties</database.properties.file>
                             </systemPropertyVariables>
-                            <argLine>-XX:+TieredCompilation -XX:TieredStopAtLevel=1</argLine>
-                            <rerunFailingTestsCount>0</rerunFailingTestsCount>
                         </configuration>
                     </plugin>
                 </plugins>

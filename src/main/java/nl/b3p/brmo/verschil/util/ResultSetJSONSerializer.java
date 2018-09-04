@@ -10,8 +10,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.*;
 
-public class ResultSetSerializer extends JsonSerializer<ResultSet> {
-    private static final Log LOG = LogFactory.getLog(ResultSetSerializer.class);
+public class ResultSetJSONSerializer extends JsonSerializer<ResultSet> {
+    private static final Log LOG = LogFactory.getLog(ResultSetJSONSerializer.class);
     private long count = -1;
 
     /**
@@ -132,7 +132,7 @@ public class ResultSetSerializer extends JsonSerializer<ResultSet> {
                         case Types.STRUCT:
                         case Types.DISTINCT:
                         case Types.REF:
-                            throw new NotImplementedException("ResultSetSerializer (nog) niet geimplementeerd voor SQL type: " + colTypes[i]);
+                            throw new NotImplementedException("ResultSetJSONSerializer (nog) niet geimplementeerd voor SQL type: " + colTypes[i]);
                         case Types.JAVA_OBJECT:
                         default:
                             serializers.defaultSerializeValue(resultSet.getObject(i + 1), gen);

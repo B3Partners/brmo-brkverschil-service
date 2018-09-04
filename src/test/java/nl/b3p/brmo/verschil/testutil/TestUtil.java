@@ -40,6 +40,7 @@ import java.util.Properties;
 public abstract class TestUtil {
     private static final Log LOG = LogFactory.getLog(TestUtil.class);
     private static boolean haveSetupJNDI = false;
+
     /**
      * properties uit {@code <DB smaak>.properties} en
      * {@code local.<DB smaak>.properties}.
@@ -49,7 +50,8 @@ public abstract class TestUtil {
     protected final Properties DBPROPS = new Properties();
 
     /**
-     * our test client.
+     * onze test client.
+     * @see #setUpHttpClient()
      */
     protected static CloseableHttpClient client;
 
@@ -58,6 +60,9 @@ public abstract class TestUtil {
      */
     public static final String BASE_TEST_URL = "http://localhost:9090/brmo-brkverschil-service/";
 
+    /**
+     * set up van custom http client voor de integratie tests.
+     */
     @BeforeAll
     public static void setUpHttpClient() {
         client = HttpClients.custom()
@@ -74,9 +79,8 @@ public abstract class TestUtil {
     }
 
     /**
-     * subklassen dienen zelf een setup te hebben; vanwege de overerving gaat
-     * deze methode af na de {@code @Before} methoden van de superklasse, bijv.
-     * {@link #loadDBprop()}.
+     * Subklassen dienen zelf een setup te hebben. Vanwege de overerving gaat
+     * deze methode af na de {@code @BeforeEach} methoden van de superklasse, bijvoorbeeld {@link #loadDBprop()}.
      *
      * @throws Exception if any
      */
@@ -114,7 +118,7 @@ public abstract class TestUtil {
      * @param testInfo current test information
      */
     @BeforeEach
-    public void startTest(TestInfo testInfo) {
+    final public void startTest(TestInfo testInfo) {
         LOG.info("==== Start test methode: " + testInfo.getTestMethod());
     }
 
@@ -124,7 +128,7 @@ public abstract class TestUtil {
      * @param testInfo current test information
      */
     @AfterEach
-    public void endTest(TestInfo testInfo) {
+    final public void endTest(TestInfo testInfo) {
         LOG.info("==== Einde test methode: " + testInfo.getTestMethod());
     }
 

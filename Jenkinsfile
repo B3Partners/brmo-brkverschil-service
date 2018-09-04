@@ -22,6 +22,12 @@ timestamps {
                 sh "mvn install -Dmaven.test.skip=true -B -V -e -fae -q"
             }
 
+            stage('Lint') {
+                echo "Running Lint checks"
+                sh "mvn javadoc:javadoc"
+                sh "mvn javadoc:test-javadoc"
+            }
+
             stage('Test') {
                 echo "Running unit tests"
                 sh "mvn -e test -B"

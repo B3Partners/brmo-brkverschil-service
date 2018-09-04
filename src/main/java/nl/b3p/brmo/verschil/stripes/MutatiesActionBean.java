@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.validation.Validate;
 import nl.b3p.brmo.verschil.util.ConfigUtil;
-import nl.b3p.brmo.verschil.util.ResultSetSerializer;
+import nl.b3p.brmo.verschil.util.ResultSetJSONSerializer;
 import nl.b3p.brmo.verschil.util.ResultSetSerializerException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
@@ -226,7 +226,6 @@ public class MutatiesActionBean implements ActionBean {
      * @return aantal gekoppeld
      */
     private long getGekoppeldeObjecten(File workDir) {
-        // TODO gebruikt v_kad_onrrnd_zk_adres welke pas beschikbaar is in 1.6.0
         StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
                 .append("o.kad_identif, ")
                 .append("adr.gemeentecode, ")
@@ -242,7 +241,7 @@ public class MutatiesActionBean implements ActionBean {
                 .append("adr.woonplaats, ")
                 .append("adr.postcode ")
                 .append("FROM kad_onrrnd_zk o ")
-                .append("LEFT JOIN v_kad_onrrnd_zk_adres adr ON adr.koz_identif = o.kad_identif ")
+                .append("LEFT JOIN vb_kad_onrrnd_zk_adres adr ON adr.koz_identif = o.kad_identif ")
                 .append("WHERE '[")
                 .append(df.format(van))
                 .append(",")
@@ -502,7 +501,7 @@ public class MutatiesActionBean implements ActionBean {
                 LOG.trace(stm);
 
                 SimpleModule module = new SimpleModule();
-                ResultSetSerializer serializer = new ResultSetSerializer();
+                ResultSetJSONSerializer serializer = new ResultSetJSONSerializer();
                 ObjectMapper mapper = new ObjectMapper();
 
                 try (ResultSet r = stm.executeQuery()) {
