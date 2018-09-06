@@ -295,3 +295,73 @@ AND pa.grootte_perceel != k.grootte_perceel
 ORDER BY
     za.kad_identif,
     za.dat_beg_geldh DESC
+
+
+
+
+
+
+
+
+-- nieuwe subjecten
+SELECT DISTINCT ON (o.naam)
+    --o.koz_identif,
+    o.begin_geldigheid,
+    /*
+    o.gemeentecode,
+    o.perceelnummer,
+    o.deelperceelnummer,
+    o.sectie,
+    o.appartementsindex,
+    o.aandeel,
+    o.omschr_aard_verkregenr_recht,
+    */
+    o.soort,
+    o.geslachtsnaam,
+    o.voorvoegsel,
+    o.voornamen,
+    o.naam,
+    o.woonadres,
+    o.geboortedatum,
+    o.overlijdensdatum,
+    o.bsn,
+    o.rsin,
+    o.kvk_nummer,
+    o.straatnaam,
+    o.huisnummer,
+    o.huisletter,
+    o.huisnummer_toev,
+    o.postcode,
+    o.woonplaats
+    --b.kpr_nummer
+FROM
+    vb_koz_rechth o
+    --mb_koz_rechth o
+LEFT JOIN
+    belastingplichtige b
+ON (
+        o.gemeentecode=b.ka_kad_gemeentecode
+    AND o.sectie=b.ka_sectie
+    AND o.perceelnummer=b.ka_perceelnummer
+    AND COALESCE(o.deelperceelnummer,'')=COALESCE(b.ka_deelperceelnummer,'')
+    AND COALESCE(o.appartementsindex,'')=COALESCE(b.ka_appartementsindex,'') 
+   )
+-- nieuwe objecten
+WHERE
+    '[2018-08-01,2018-08-27]'::daterange @> o.begin_geldigheid::DATE
+AND o.koz_identif NOT IN
+    (
+        SELECT
+            kad_identif
+        FROM
+            kad_onrrnd_zk_archief
+        WHERE
+            '2018-08-01'::DATE < dat_beg_geldh::DATE)
+-- die niet gekoppeld kunnen worden
+AND b.kpr_nummer IS NULL
+-- alleen de eerste naam
+ORDER BY
+    o.naam,
+    o.begin_geldigheid ASC
+
+
