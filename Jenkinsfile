@@ -1,12 +1,9 @@
 timestamps {
 
     properties([
-        [$class: 'jenkins.model.BuildDiscarderProperty', strategy: [$class: 'LogRotator',
-            artifactDaysToKeepStr: '8',
-            artifactNumToKeepStr: '3',
-            daysToKeepStr: '15',
-            numToKeepStr: '5']
-        ]]);
+        buildDiscarder(logRotator(artifactDaysToKeepStr: '8', artifactNumToKeepStr: '3', daysToKeepStr: '15', numToKeepStr: '3')),
+        pipelineTriggers([[$class: 'PeriodicFolderTrigger', interval: '15m']])
+    ]);
 
     node {
         withEnv(["JAVA_HOME=${ tool 'JDK8' }", "PATH+MAVEN=${tool 'Maven 3.5.4'}/bin:${env.JAVA_HOME}/bin"]) {
