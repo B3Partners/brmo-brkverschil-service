@@ -542,7 +542,8 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         StringBuilder sql = new StringBuilder("SELECT ")
                 .append("i.bsn, ")
                 .append("h.datum::TEXT ")
-                // TODO KPR nummer?? waar komt dat dan vandaan?
+                // TODO (?)KPR nummer
+                // waar komt dat dan vandaan?
                 .append("FROM ingeschr_nat_prs i ")
                 .append("LEFT JOIN herkomst_metadata h ON ")
                 .append("i.sc_identif = h.waarde ")

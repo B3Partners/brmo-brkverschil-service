@@ -143,7 +143,7 @@ public class ResultSetJSONSerializer extends JsonSerializer<ResultSet> {
                             serializers.defaultSerializeValue(clob.getCharacterStream(), gen);
                             clob.free();
                             break;
-                        // TODO er missen nog wat types
+                        // TODO er missen mogelijk nog wat SQL data types
                         case Types.ARRAY:
                         case Types.STRUCT:
                         case Types.DISTINCT:

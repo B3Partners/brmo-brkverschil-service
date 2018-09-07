@@ -72,7 +72,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <test.skipTs>false</test.skipTs>
         <test.skipITs>true</test.skipITs>
-        <junit.jupiter.version>5.2.0</junit.jupiter.version>
+        <junit.jupiter.version>5.3.0</junit.jupiter.version>
         <junit.platform.version>1.2.0</junit.platform.version>
         <brmo.version>1.6.0</brmo.version>
         <tomcat.version>7.0.90</tomcat.version>
@@ -254,7 +254,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-assembly-plugin</artifactId>
