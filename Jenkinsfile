@@ -2,7 +2,9 @@ timestamps {
 
     properties([
         buildDiscarder(logRotator(artifactDaysToKeepStr: '8', artifactNumToKeepStr: '3', daysToKeepStr: '15', numToKeepStr: '3')),
-        pipelineTriggers([[$class: 'PeriodicFolderTrigger', interval: '15m']])
+        pipelineTriggers([
+            [$class: 'PeriodicFolderTrigger', interval: '15m']
+        ])
     ]);
 
     node {

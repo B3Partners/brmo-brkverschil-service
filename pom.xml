@@ -79,6 +79,8 @@
         <postgresql.jdbc.version>42.2.5</postgresql.jdbc.version>
         <maven.surefire.version>2.22.0</maven.surefire.version>
         <jacoco-maven-plugin.version>0.8.2</jacoco-maven-plugin.version>
+        <jacoco.it.execution.data.file>${project.build.directory}/jacoco-it.exec</jacoco.it.execution.data.file>
+        <jacoco.ut.execution.data.file>${project.build.directory}/jacoco-ut.exec</jacoco.ut.execution.data.file>
         <versions-maven-plugin.version>2.5</versions-maven-plugin.version>
         <maven-project-info-reports-plugin.version>3.0.0</maven-project-info-reports-plugin.version>
         <maven-jxr-plugin.version>2.5</maven-jxr-plugin.version>
@@ -221,6 +223,12 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.7.25</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>2.20.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -482,20 +490,39 @@
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
+                        <configuration>
+                            <destFile>${jacoco.ut.execution.data.file}</destFile>
+                            <propertyName>surefireArgLine</propertyName>
+                        </configuration>
                     </execution>
                     <execution>
-                        <id>pre-integration-test</id>
-                        <phase>pre-integration-test</phase>
+                        <id>post-unit-test</id>
+                        <phase>test</phase>
                         <goals>
-                            <goal>prepare-agent-integration</goal>
+                            <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <dataFile>${jacoco.ut.execution.data.file}</dataFile>
+                            <!--<outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>-->
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>post-integration-test</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>report-integration</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${jacoco.it.execution.data.file}</dataFile>
+                            <!--<outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>-->
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine>@{argLine}</argLine>
+                    <argLine>${surefireArgLine}</argLine>
                     <trimStackTrace>false</trimStackTrace>
                     <useFile>false</useFile>
                     <excludes>
@@ -514,7 +541,7 @@
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
-                    <argLine>@{argLine}</argLine>
+                    <argLine>${failsafeArgLine}</argLine>
                     <trimStackTrace>false</trimStackTrace>
                     <useFile>false</useFile>
                     <includes>
@@ -649,6 +676,9 @@
                         </reports>
                     </reportSet>
                 </reportSets>
+                <configuration>
+
+                </configuration>
             </plugin>
         </plugins>
     </reporting>
@@ -713,6 +743,9 @@
                                 <configuration>
                                     <fork>true</fork>
                                     <skip>${maven.test.skip}</skip>
+                                    <jarScanAllDirectories>false</jarScanAllDirectories>
+                                    <uriEncoding>UTF-8</uriEncoding>
+                                    <systemProperties />
                                 </configuration>
                             </execution>
                             <execution>
@@ -732,6 +765,12 @@
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
                                 <version>${postgresql.jdbc.version}</version>
+                            </dependency>
+                            <!-- voor de integratie tests-->
+                            <dependency>
+                                <groupId>org.jacoco</groupId>
+                                <artifactId>org.jacoco.agent</artifactId>
+                                <version>${jacoco-maven-plugin.version}</version>
                             </dependency>
                         </dependencies>
                     </plugin>
