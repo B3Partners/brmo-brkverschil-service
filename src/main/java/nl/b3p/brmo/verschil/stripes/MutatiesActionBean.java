@@ -24,8 +24,14 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import net.sourceforge.stripes.validation.ValidationError;
+import net.sourceforge.stripes.validation.ValidationErrorHandler;
+import net.sourceforge.stripes.validation.ValidationErrors;
 
 /**
  * Mutaties actionbean. Haalt mutaties uit de BRMO RSGB database voor de gegeven
@@ -38,7 +44,7 @@ import java.util.zip.ZipOutputStream;
  */
 @RestActionBean
 @UrlBinding("/rest/{location}")
-public class MutatiesActionBean implements ActionBean {
+public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
 
     private static final Log LOG = LogFactory.getLog(MutatiesActionBean.class);
     private final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
@@ -46,7 +52,7 @@ public class MutatiesActionBean implements ActionBean {
      * verplichte datum begin periode. Datum in yyyy-mm-dd formaat, de
      * begindatum is deel van de periode.
      */
-    @Validate
+    @Validate(required = true, mask = "\\d{4}-\\d{2}-\\d{2}")
     private Date van;
     /**
      * optionele datum einde periode, default is datum van aanroepen. Datum in
@@ -64,12 +70,33 @@ public class MutatiesActionBean implements ActionBean {
     private ActionBeanContext context;
     private long copied;
 
+    @Override
+    public Resolution handleValidationErrors(ValidationErrors errors) throws Exception {
+        StringBuilder msg = new StringBuilder("Validatiefout(en): \n");
+        if (errors.hasFieldErrors()) {
+            for (Map.Entry<String, List<ValidationError>> entry : errors.entrySet()) {
+                for (ValidationError e : entry.getValue()) {
+                    if (LOG.isDebugEnabled()) {
+                        msg.append("veld: ").append(entry.getKey()).append(", waarde: ");
+                        msg.append(e.getFieldValue()).append(", melding: ");
+                    }
+                    msg.append(e.getMessage(Locale.ROOT)).append(" \n");
+                }
+
+            }
+        }
+        return new ErrorResolution(HttpServletResponse.SC_BAD_REQUEST, msg.toString());
+    }
+
     @GET
     @DefaultHandler
     public Resolution get() throws IOException {
         LOG.trace("get met params: van=" + van + " tot=" + tot);
         if (van == null) {
-            return new ErrorResolution(500, "De verplichte parameter `van` ontbreekt.");
+            return new ErrorResolution(HttpServletResponse.SC_BAD_REQUEST, "De verplichte parameter `van` ontbreekt.");
+        }
+        if (tot.before(van)) {
+            return new ErrorResolution(HttpServletResponse.SC_BAD_REQUEST, "`van` datum is voor `tot` datum");
         }
         LOG.info("Uitvoeren opdracht met params: van=" + df.format(van) + " tot=" + df.format(tot));
 

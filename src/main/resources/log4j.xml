@@ -17,6 +17,9 @@
     <logger name="nl.b3p.brmo.verschil">
         <level value="trace"/>
     </logger>
+    <logger name="net.sourceforge.stripes.validation">
+        <level value="warn"/>
+    </logger>
     <root>
         <level value="info"/>
         <appender-ref ref="consoleAppender" />

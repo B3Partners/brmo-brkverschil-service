@@ -77,22 +77,17 @@
         <servlet-name>StripesDispatcher</servlet-name>
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>StripesDispatcher</servlet-name>
-        <url-pattern>/admin/action/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>StripesDispatcher</servlet-name>
-        <url-pattern>*.wait</url-pattern>
-    </servlet-mapping>
     <security-constraint>
+        <display-name>css en javascript resources</display-name>
         <web-resource-collection>
             <web-resource-name>layout</web-resource-name>
             <url-pattern>/styles/*</url-pattern>
             <url-pattern>/scripts/*</url-pattern>
         </web-resource-collection>
+        <!-- niet beveiligd -->
     </security-constraint>
     <security-constraint>
+        <display-name>rest endpoints</display-name>
         <web-resource-collection>
             <web-resource-name>service endpoint</web-resource-name>
             <url-pattern>/rest/*</url-pattern>
@@ -105,30 +100,34 @@
         -->
     </security-constraint>
     <security-constraint>
+        <display-name>Web GUI</display-name>
         <web-resource-collection>
             <web-resource-name>all</web-resource-name>
             <url-pattern>/*</url-pattern>
         </web-resource-collection>
         <auth-constraint>
-            <role-name>Admin</role-name>
+            <role-name>BRKMutaties</role-name>
         </auth-constraint>
     </security-constraint>
     <security-constraint>
+        <display-name>logout</display-name>
         <web-resource-collection>
             <web-resource-name>roles</web-resource-name>
             <url-pattern>/logout.jsp</url-pattern>
+            <url-pattern>/login.jsp</url-pattern>
+            <url-pattern>/loginfail.jsp</url-pattern>
         </web-resource-collection>
     </security-constraint>
     <login-config>
         <!-- BASIC is useful during development with lots of redeploys, use FORM for production -->
         <auth-method>FORM</auth-method>
         <form-login-config>
-            <form-login-page>/login.jsp</form-login-page>
             <form-error-page>/loginfail.jsp</form-error-page>
+            <form-login-page>/login.jsp</form-login-page>
         </form-login-config>
     </login-config>
     <security-role>
-        <role-name>Admin</role-name>
+        <role-name>BRKMutaties</role-name>
     </security-role>
     <session-config>
         <session-timeout>30</session-timeout>

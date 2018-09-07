@@ -12,11 +12,12 @@
         </dl>
         <h3>Voorbeelden van de REST API</h3>
         <ul>
-            <li><a href="${contextPath}/rest/mutaties?van=2018-08-01">mutaties vanaf 2018-08-01</li>
-            <li><a href="${contextPath}/rest/mutaties?van=2018-08-01&f=csv">mutaties vanaf 2018-08-01 in csv formaat</li>
-            <li><a href="${contextPath}/rest/mutaties?van=2018-08-01&tot=2018-09-01">mutaties vanaf 2018-08-01 tot 2018-09-01</li>
-            <li><a href="${contextPath}/rest/mutaties"><strong>foutief verzoek</strong> (geen vanaf datum)</li>
-            <li><a href="${contextPath}/rest/mutaties?van=2018-08-01&f=text"><strong>foutief verzoek</strong> (geen geldig formaat)</li>
+            <li><a href="${contextPath}/rest/mutaties?van=2018-08-01">mutaties vanaf 2018-08-01</a></li>
+            <li><a href="${contextPath}/rest/mutaties?van=2018-08-01&f=csv">mutaties vanaf 2018-08-01</a> in csv formaat</li>
+            <li><a href="${contextPath}/rest/mutaties?van=2018-08-01&tot=2018-09-01">mutaties vanaf 2018-08-01 tot 2018-09-01</a></li>
+            <li><a href="${contextPath}/rest/mutaties"><strong>foutief verzoek</strong></a> (geen vanaf datum)</li>
+            <li><a href="${contextPath}/rest/mutaties?van=2018-09-01&tot=2018-08-01"><strong>foutief verzoek</strong></a> (vanaf datum voor tot datum)</li>
+            <li><a href="${contextPath}/rest/mutaties?van=2018-08-01&f=text"><strong>foutief verzoek</strong></a> (geen geldig formaat) levert default formaat</li>
             <li><a href="${contextPath}/rest/ping" target="_blank">ping endpoint</a> geeft de datum terug in json</li>
             <li><a href="${contextPath}/rest/ping?tot=2018-09-01" target="_blank">ping endpoint</a> met "tot 2018-09-01"</li>
         </ul>
