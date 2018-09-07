@@ -491,8 +491,19 @@
                             <goal>prepare-agent</goal>
                         </goals>
                         <configuration>
-                            <destFile>${jacoco.ut.execution.data.file}</destFile>
                             <propertyName>surefireArgLine</propertyName>
+                            <destFile>${jacoco.ut.execution.data.file}</destFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>pre-integration-test</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>prepare-agent-integration</goal>
+                        </goals>
+                        <configuration>
+                            <propertyName>failsafeArgLine</propertyName>
+                            <destFile>${jacoco.it.execution.data.file}</destFile>
                         </configuration>
                     </execution>
                     <execution>
@@ -503,7 +514,6 @@
                         </goals>
                         <configuration>
                             <dataFile>${jacoco.ut.execution.data.file}</dataFile>
-                            <!--<outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>-->
                         </configuration>
                     </execution>
                     <execution>
@@ -514,7 +524,6 @@
                         </goals>
                         <configuration>
                             <dataFile>${jacoco.it.execution.data.file}</dataFile>
-                            <!--<outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>-->
                         </configuration>
                     </execution>
                 </executions>
@@ -664,22 +673,23 @@
                     <goal>failsafe-report-only</goal>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco-maven-plugin.version}</version>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>report</report>
-                            <report>report-integration</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-                <configuration>
-
-                </configuration>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.jacoco</groupId>-->
+                <!--<artifactId>jacoco-maven-plugin</artifactId>-->
+                <!--<version>${jacoco-maven-plugin.version}</version>-->
+                <!--<reportSets>-->
+                    <!--<reportSet>-->
+                        <!--<reports>-->
+                            <!--<report>report</report>-->
+                            <!--<report>report-integration</report>-->
+                            <!--<report>report-aggregate</report>-->
+                        <!--</reports>-->
+                    <!--</reportSet>-->
+                <!--</reportSets>-->
+                <!--<configuration>-->
+                    <!--<excludes>**/*Test.class</excludes>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
         </plugins>
     </reporting>
     <profiles>
