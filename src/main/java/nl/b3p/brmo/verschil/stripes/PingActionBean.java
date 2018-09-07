@@ -2,7 +2,6 @@ package nl.b3p.brmo.verschil.stripes;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.validation.Validate;
-
 import javax.servlet.http.HttpServletResponse;
 import java.util.Date;
 
@@ -12,6 +11,7 @@ import java.util.Date;
 @RestActionBean
 @UrlBinding("/rest/ping")
 public class PingActionBean implements ActionBean {
+
     private ActionBeanContext context;
 
     @Validate

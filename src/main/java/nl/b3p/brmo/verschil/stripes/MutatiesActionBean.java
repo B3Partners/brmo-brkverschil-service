@@ -24,14 +24,15 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import net.sourceforge.stripes.validation.ValidationError;
+import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationErrorHandler;
 import net.sourceforge.stripes.validation.ValidationErrors;
+import static net.sourceforge.stripes.validation.ValidationErrors.GLOBAL_ERROR;
+import net.sourceforge.stripes.validation.ValidationMethod;
+import net.sourceforge.stripes.validation.ValidationState;
 
 /**
  * Mutaties actionbean. Haalt mutaties uit de BRMO RSGB database voor de gegeven
@@ -58,7 +59,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      * optionele datum einde periode, default is datum van aanroepen. Datum in
      * yyyy-mm-dd formaat, de einddatum is deel van de periode, dwz. tot-en-met.
      */
-    @Validate
+    @Validate(mask = "\\d{4}-\\d{2}-\\d{2}")
     private Date tot = new Date();
 
     /**
@@ -70,21 +71,35 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     private ActionBeanContext context;
     private long copied;
 
+    @ValidationMethod(when = ValidationState.NO_ERRORS)
+    public void validateVanBeforeTot(ValidationErrors errors) {
+        if (tot.before(van)) {
+            errors.addGlobalError(new SimpleError("`van` datum is voor `tot` datum"));
+        }
+    }
+
     @Override
     public Resolution handleValidationErrors(ValidationErrors errors) throws Exception {
         StringBuilder msg = new StringBuilder("Validatiefout(en): \n");
         if (errors.hasFieldErrors()) {
-            for (Map.Entry<String, List<ValidationError>> entry : errors.entrySet()) {
-                for (ValidationError e : entry.getValue()) {
+            errors.entrySet().stream().forEach((entry) -> {
+                entry.getValue().stream().map((e) -> {
                     if (LOG.isDebugEnabled()) {
                         msg.append("veld: ").append(entry.getKey()).append(", waarde: ");
                         msg.append(e.getFieldValue()).append(", melding: ");
                     }
+                    return e;
+                }).forEach((e) -> {
                     msg.append(e.getMessage(Locale.ROOT)).append(" \n");
-                }
-
-            }
+                });
+            });
         }
+        if (errors.get(GLOBAL_ERROR) != null) {
+            errors.get(GLOBAL_ERROR).stream().forEach((e) -> {
+                msg.append(e.getMessage(Locale.ROOT));
+            });
+        }
+
         return new ErrorResolution(HttpServletResponse.SC_BAD_REQUEST, msg.toString());
     }
 
@@ -92,12 +107,6 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     @DefaultHandler
     public Resolution get() throws IOException {
         LOG.trace("get met params: van=" + van + " tot=" + tot);
-        if (van == null) {
-            return new ErrorResolution(HttpServletResponse.SC_BAD_REQUEST, "De verplichte parameter `van` ontbreekt.");
-        }
-        if (tot.before(van)) {
-            return new ErrorResolution(HttpServletResponse.SC_BAD_REQUEST, "`van` datum is voor `tot` datum");
-        }
         LOG.info("Uitvoeren opdracht met params: van=" + df.format(van) + " tot=" + df.format(tot));
 
         // maak werkdirectory en werkbestand

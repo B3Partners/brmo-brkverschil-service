@@ -27,17 +27,14 @@ import java.io.IOException;
 import static net.javacrumbs.jsonunit.JsonAssert.assertJsonEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-public class PingActionBeanIntegrationTest extends TestUtil {
 
-    /**
-     * onze test response.
-     */
+public class PingActionBeanIntegrationTest extends TestUtil {
     private HttpResponse response;
 
     @BeforeEach
     @Override
     public void setUp() {
-
+        // dummy
     }
 
     @Test
@@ -45,7 +42,7 @@ public class PingActionBeanIntegrationTest extends TestUtil {
         response = client.execute(new HttpGet(BASE_TEST_URL + "rest/ping?tot=2008-04-12"));
         String body = EntityUtils.toString(response.getEntity());
 
-        assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK, "Response status is OK.");
+        assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK, "Response status is niet OK.");
         assertNotNull(body, "Response body mag niet null zijn.");
         // 1207951200000 == 2008-04-12 00:00
         assertJsonEquals("{\"pong\":1207951200000}", body);

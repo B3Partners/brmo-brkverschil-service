@@ -29,17 +29,26 @@ import org.dbunit.ext.postgresql.PostgresqlDataTypeFactory;
 import org.dbunit.operation.DatabaseOperation;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import nl.b3p.brmo.verschil.testutil.TestUtil;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpGet;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-public class MutatiesActionBeanIntegrationTest extends nl.b3p.brmo.verschil.testutil.TestUtil {
+public class MutatiesActionBeanIntegrationTest extends TestUtil {
+
     private static final Log LOG = LogFactory.getLog(MutatiesActionBeanIntegrationTest.class);
     private IDatabaseConnection staging;
     private IDatabaseConnection rsgb;
     private final Lock sequential = new ReentrantLock(true);
+    private HttpResponse response;
 
     @BeforeEach
     @Override
@@ -61,7 +70,7 @@ public class MutatiesActionBeanIntegrationTest extends nl.b3p.brmo.verschil.test
         staging = new DatabaseDataSourceConnection(dsStaging);
         rsgb = new DatabaseDataSourceConnection(dsRsgb);
 
-        setupJNDI(dsRsgb,dsStaging);
+        setupJNDI(dsRsgb, dsStaging);
 
         staging.getConfig().setProperty(DatabaseConfig.PROPERTY_DATATYPE_FACTORY, new PostgresqlDataTypeFactory());
         rsgb.getConfig().setProperty(DatabaseConfig.PROPERTY_DATATYPE_FACTORY, new PostgresqlDataTypeFactory());
@@ -82,5 +91,18 @@ public class MutatiesActionBeanIntegrationTest extends nl.b3p.brmo.verschil.test
         rsgb.close();
 
         sequential.unlock();
+    }
+
+    @Test
+    @Disabled("TODO")
+    public void testValidZipReturned() throws IOException {
+        // TODO
+        response = client.execute(new HttpGet(BASE_TEST_URL + "rest/mutatiess?van=2018-01-01&tot=2018-09-01"));
+        // InputStream is = response.getEntity().getContent();
+        // String body = EntityUtils.toString(response.getEntity());
+
+        assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode(), "Response status is niet OK.");
+
+        // see: https://stackoverflow.com/questions/2085637/how-to-check-if-a-generated-zip-file-is-corrupted
     }
 }
