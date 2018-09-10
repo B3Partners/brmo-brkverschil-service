@@ -1,5 +1,18 @@
 /*
  * Copyright (C) 2018 B3Partners B.V.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package nl.b3p.brmo.verschil.stripes;
 
@@ -70,6 +83,29 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
 
     private ActionBeanContext context;
     private long copied;
+    private boolean errorCondition = false;
+
+    // als gekoppeld wordt met een table
+    private static final String BP_JOIN_CLAUSE = new StringBuilder()
+            .append("belastingplichtige b ON ( ")
+            .append("      q.ka_kad_gemeentecode=trim(LEADING '0' from b.ka_kad_gemeentecode) ")
+            .append("  AND q.ka_sectie=b.ka_sectie ")
+            .append("  AND q.ka_perceelnummer=trim(LEADING '0' from b.ka_perceelnummer) ")
+            .append("  AND coalesce(q.ka_deelperceelnummer,'')=coalesce(trim(LEADING '0' from b.ka_deelperceelnummer),'') ")
+            .append("  AND coalesce(q.ka_appartementsindex,'')=coalesce(trim(LEADING '0' from b.ka_appartementsindex),'') )").toString();
+
+    // als gekoppeld wordt met een view
+    private static final String BP_JOIN_CLAUSE_V = new StringBuilder()
+            .append("belastingplichtige b ON ( ")
+            .append("      q.gemeentecode=trim(LEADING '0' from b.ka_kad_gemeentecode) ")
+            .append("  AND q.sectie=b.ka_sectie ")
+            .append("  AND q.perceelnummer=trim(LEADING '0' from b.ka_perceelnummer) ")
+            .append("  AND coalesce(q.deelperceelnummer,'')=coalesce(trim(LEADING '0' from b.ka_deelperceelnummer),'') ")
+            .append("  AND coalesce(q.appartementsindex,'')=coalesce(trim(LEADING '0' from b.ka_appartementsindex),'') )").toString();
+
+    // grbuikte views waarvan evt een materialized versie gebruikt kan worden
+    private final String VIEW_KOZ_RECHTHEBBENDE = "vb_koz_rechth"; // of mb_koz_rechth
+    private final String VIEW_KAD_ONRRND_ZK_ADRES = "vb_kad_onrrnd_zk_adres adr"; // of mb_kad_onrrnd_zk_adres adr
 
     @ValidationMethod(when = ValidationState.NO_ERRORS)
     public void validateVanBeforeTot(ValidationErrors errors) {
@@ -139,14 +175,18 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         long bsn = this.getBSNAangevuld(workDir);
         LOG.debug("aantal aangepast bsn: " + bsn);
 
+        if (nwOnrrgd < 0 || gekoppeld < 0 || vervallen < 0 || verkopen < 0 || oppVeranderd < 0 || nwSubject < 0 || bsn < 0) {
+            errorCondition = true;
+        }
         // zippen resultaat in workZip
         try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(workZip.toPath()))) {
+            LOG.debug("Aanmaken van zip bestand: " + workZip);
             Files.walk(workPath)
                     .filter(path -> !Files.isDirectory(path))
                     .forEach(path -> {
                         ZipEntry zipEntry = new ZipEntry(workPath.relativize(path).toString());
                         try {
-                            LOG.debug("Putting file: " + zipEntry);
+                            LOG.debug("Toevoegen van bestand: " + zipEntry);
                             zs.putNextEntry(zipEntry);
                             Files.copy(path, zs);
                             zs.closeEntry();
@@ -161,14 +201,16 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
             public void stream(HttpServletResponse response) throws Exception {
                 copied = FileUtils.copyFile(workZip, response.getOutputStream());
                 LOG.debug("bytes copied: " + copied);
-
+                if (!errorCondition) {
+                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                }
                 FileUtils.deleteQuietly(workDir);
                 FileUtils.deleteQuietly(workZip);
             }
         }.setFilename("mutaties_" + df.format(van) + "_" + df.format(tot) + ".zip")
-                .setLastModified(tot.getTime())
-                //.setLength(copied)
-                .setAttachment(false);
+                // 0! .setLength(copied)
+                .setAttachment(true)
+                .setLastModified(tot.getTime());
     }
 
     /**
@@ -181,15 +223,15 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
                 .append("o.kad_identif, ")
                 .append("o.dat_beg_geldh, ")
-                .append("q.ka_kad_gemeentecode, ")
-                .append("q.ka_perceelnummer, ")
-                .append("q.ka_deelperceelnummer, ")
-                .append("q.ka_sectie, ")
-                .append("q.ka_appartementsindex, ")
+                .append("b.ka_kad_gemeentecode, ")
+                .append("b.ka_perceelnummer, ")
+                .append("b.ka_deelperceelnummer, ")
+                .append("b.ka_sectie, ")
+                .append("b.ka_appartementsindex, ")
+                .append("b.kpr_nummer, ")
                 .append("q.grootte_perceel, ")
                 .append("q.x, ")
                 .append("q.y, ")
-                .append("b.kpr_nummer, ")
                 .append("z.ar_teller, ")
                 .append("z.ar_noemer, ")
                 .append("z.fk_3avr_aand, ")
@@ -228,12 +270,8 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 // ontstaan uit
                 .append("LEFT JOIN kad_onrrnd_zk_his_rel h ON o.kad_identif=h.fk_sc_lh_koz_kad_identif ")
                 // BKP erbij
-                .append("JOIN belastingplichtige b ON ( ")
-                .append("      q.ka_kad_gemeentecode=b.ka_kad_gemeentecode ")
-                .append("  AND q.ka_sectie=b.ka_sectie ")
-                .append("  AND q.ka_perceelnummer=b.ka_perceelnummer ")
-                .append("  AND coalesce(q.ka_deelperceelnummer,'')=coalesce(b.ka_deelperceelnummer,'') ")
-                .append("  AND coalesce(q.ka_appartementsindex,'')=coalesce(b.ka_appartementsindex,'') )")
+                .append("JOIN ")
+                .append(BP_JOIN_CLAUSE)
                 // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief,
                 // maar niet in de archief tabel met een datum voor "van".
                 .append("WHERE '[")
@@ -263,12 +301,12 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      */
     private long getGekoppeldeObjecten(File workDir) {
         StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
-                .append("o.kad_identif, ")
+                .append("adr.koz_identif, ")
                 .append("adr.gemeentecode, ")
                 .append("adr.sectie, ")
                 .append("adr.perceelnummer, ")
                 .append("adr.appartementsindex, ")
-                .append("o.lo_loc__omschr, ")
+                .append("adr.loc_omschr, ")
                 .append("adr.benoemdobj_identif, ")
                 .append("adr.straatnaam, ")
                 .append("adr.huisnummer, ")
@@ -276,14 +314,14 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("adr.huisnummer_toev, ")
                 .append("adr.woonplaats, ")
                 .append("adr.postcode ")
-                .append("FROM kad_onrrnd_zk o ")
-                .append("LEFT JOIN vb_kad_onrrnd_zk_adres adr ON adr.koz_identif = o.kad_identif ")
-                .append("WHERE '[")
+                .append("FROM ")
+                .append(VIEW_KAD_ONRRND_ZK_ADRES)
+                .append(" WHERE '[")
                 .append(df.format(van))
                 .append(",")
                 .append(df.format(tot))
-                .append("]'::DATERANGE @> dat_beg_geldh::date ")
-                .append("AND kad_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
+                .append("]'::DATERANGE @> adr.begin_geldigheid::date ")
+                .append("AND adr.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
                 .append(df.format(van))
                 .append("'::date < dat_beg_geldh::date) ");
         switch (f) {
@@ -401,22 +439,20 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      */
     private long getVerkopen(File workDir) {
         StringBuilder sql = new StringBuilder("SELECT ")
-                .append("DISTINCT b.ref_id, ")
-                .append("b.datum::text, ")
-                //
-                .append("q.ka_kad_gemeentecode, ")
-                .append("q.ka_sectie, ")
-                .append("q.ka_perceelnummer, ")
-                .append("q.ka_deelperceelnummer, ")
-                .append("q.ka_appartementsindex, ")
-                //
-                .append("k.kpr_nummer, ")
+                .append("DISTINCT bron.ref_id, ")
+                .append("bron.datum::text, ")
+                .append("b.ka_kad_gemeentecode, ")
+                .append("b.ka_sectie, ")
+                .append("b.ka_perceelnummer, ")
+                .append("b.ka_deelperceelnummer, ")
+                .append("b.ka_appartementsindex, ")
+                .append("b.kpr_nummer, ")
                 .append("z.ar_teller, ")
                 .append("z.ar_noemer, ")
                 .append("z.fk_3avr_aand, ")
                 .append("avr.omschr_aard_verkregenr_recht ")
                 // verkoop + datum
-                .append("FROM ( SELECT brondocument.ref_id, max(brondocument.datum) AS datum FROM brondocument WHERE brondocument.omschrijving = 'Akte van Koop en Verkoop' GROUP BY brondocument.ref_id) b ")
+                .append("FROM ( SELECT brondocument.ref_id, max(brondocument.datum) AS datum FROM brondocument WHERE brondocument.omschrijving = 'Akte van Koop en Verkoop' GROUP BY brondocument.ref_id) bron ")
                 // samengestelde app_re en kad_perceel als q
                 .append("LEFT JOIN (SELECT  ")
                 .append("ar.sc_kad_identif, ")
@@ -435,20 +471,21 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("null AS ka_appartementsindex ")
                 .append("FROM kad_perceel p) q ")
                 // einde samenstelling app_re en kad_perceel als q
-                .append("ON b.ref_id=q.sc_kad_identif::text ")
-                .append("LEFT JOIN zak_recht z ON b.ref_id=z.fk_7koz_kad_identif::text ")
+                .append("ON bron.ref_id=q.sc_kad_identif::text ")
+                .append("LEFT JOIN zak_recht z ON bron.ref_id=z.fk_7koz_kad_identif::text ")
                 .append("LEFT JOIN aard_verkregen_recht avr ON z.fk_3avr_aand=avr.aand ")
-                .append("JOIN belastingplichtige k ON ( ")
-                .append("q.ka_kad_gemeentecode=k.ka_kad_gemeentecode ")
-                .append("AND q.ka_sectie=k.ka_sectie ")
-                .append("AND q.ka_perceelnummer=k.ka_perceelnummer ")
-                .append("AND coalesce(q.ka_deelperceelnummer,'')=coalesce(k.ka_deelperceelnummer,'') ")
-                .append("AND coalesce(q.ka_appartementsindex,'')=coalesce(k.ka_appartementsindex,'') ) ")
+                .append("JOIN ")
+//                .append("belastingplichtige b ON ( q.ka_kad_gemeentecode=b.ka_kad_gemeentecode ")
+//                .append("AND q.ka_sectie=b.ka_sectie ")
+//                .append("AND q.ka_perceelnummer=b.ka_perceelnummer ")
+//                .append("AND coalesce(q.ka_deelperceelnummer,'')=coalesce(b.ka_deelperceelnummer,'') ")
+//                .append("AND coalesce(q.ka_appartementsindex,'')=coalesce(b.ka_appartementsindex,'') ) ")
+                .append(BP_JOIN_CLAUSE)
                 .append("WHERE '[")
                 .append(df.format(van))
                 .append(",")
                 .append(df.format(tot))
-                .append("]'::DATERANGE @> b.datum ")
+                .append("]'::DATERANGE @> bron.datum ")
                 .append("AND z.fk_8pes_sc_identif IS NOT null");
 
         switch (f) {
@@ -469,59 +506,59 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      * @return aantal nieuwe subjecten
      */
     private long getNieuweSubjecten(File workDir) {
-        StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (o.naam) ")
+        StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (q.naam) ")
                 //--o.koz_identif,
-                .append("o.begin_geldigheid, ")
+                .append("q.begin_geldigheid, ")
                 /*
-                o.gemeentecode,
-                o.perceelnummer,
-                o.deelperceelnummer,
-                o.sectie,
-                o.appartementsindex,
-                o.aandeel,
-                o.omschr_aard_verkregenr_recht,
+                q.gemeentecode,
+                q.perceelnummer,
+                q.deelperceelnummer,
+                q.sectie,
+                q.appartementsindex,
+                q.aandeel,
+                q.omschr_aard_verkregenr_recht,
                  */
-                .append("o.soort, ")
-                .append("o.geslachtsnaam, ")
-                .append("o.voorvoegsel, ")
-                .append("o.voornamen, ")
-                .append("o.naam, ")
-                .append("o.woonadres, ")
-                .append("o.geboortedatum, ")
-                .append("o.overlijdensdatum, ")
-                .append("o.bsn, ")
-                .append("o.rsin, ")
-                .append("o.kvk_nummer, ")
-                .append("o.straatnaam, ")
-                .append("o.huisnummer, ")
-                .append("o.huisletter, ")
-                .append("o.huisnummer_toev, ")
-                .append("o.postcode, ")
-                .append("o.woonplaats ")
+                .append("q.soort, ")
+                .append("q.geslachtsnaam, ")
+                .append("q.voorvoegsel, ")
+                .append("q.voornamen, ")
+                .append("q.naam, ")
+                .append("q.woonadres, ")
+                .append("q.geboortedatum, ")
+                .append("q.overlijdensdatum, ")
+                .append("q.bsn, ")
+                .append("q.rsin, ")
+                .append("q.kvk_nummer, ")
+                .append("q.straatnaam, ")
+                .append("q.huisnummer, ")
+                .append("q.huisletter, ")
+                .append("q.huisnummer_toev, ")
+                .append("q.postcode, ")
+                .append("q.woonplaats ")
                 //--b.kpr_nummer
-                .append("FROM vb_koz_rechth o ")
-                // evt mat. view gebruiken .append("FROM mb_koz_rechth o ")
-                .append("LEFT JOIN belastingplichtige b ")
-                .append("ON (")
-                .append("      o.gemeentecode=b.ka_kad_gemeentecode ")
-                .append("  AND o.sectie=b.ka_sectie ")
-                .append("  AND o.perceelnummer=b.ka_perceelnummer ")
-                .append("  AND COALESCE(o.deelperceelnummer,'')=COALESCE(b.ka_deelperceelnummer,'') ")
-                .append("  AND COALESCE(o.appartementsindex,'')=COALESCE(b.ka_appartementsindex,'') )")
+                .append("FROM ").append(VIEW_KOZ_RECHTHEBBENDE).append(" q ")
+                .append("LEFT JOIN ")
+//                .append("belastingplichtige b ON (")
+//                .append("      q.gemeentecode=b.ka_kad_gemeentecode ")
+//                .append("  AND q.sectie=b.ka_sectie ")
+//                .append("  AND q.perceelnummer=b.ka_perceelnummer ")
+//                .append("  AND COALESCE(q.deelperceelnummer,'')=COALESCE(b.ka_deelperceelnummer,'') ")
+//                .append("  AND COALESCE(q.appartementsindex,'')=COALESCE(b.ka_appartementsindex,'') )")
+                .append(BP_JOIN_CLAUSE_V)
                 // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief,
                 // maar niet in de archief tabel met een datum voor "van".
                 .append("WHERE '[")
                 .append(df.format(van))
                 .append(",")
                 .append(df.format(tot))
-                .append("]'::DATERANGE @> o.begin_geldigheid::date ")
-                .append("AND kad_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
+                .append("]'::DATERANGE @> q.begin_geldigheid::date ")
+                .append("AND q.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
                 .append(df.format(van))
                 .append("'::date < dat_beg_geldh::date) ")
                 //-- die niet gekoppeld kunnen worden
                 .append("AND b.kpr_nummer IS NULL ")
                 //-- alleen de eerste naam met de oudste datum
-                .append("ORDER BY o.naam, o.begin_geldigheid ASC");
+                .append("ORDER BY q.naam, q.begin_geldigheid ASC");
 
         switch (f) {
             case "csv":
