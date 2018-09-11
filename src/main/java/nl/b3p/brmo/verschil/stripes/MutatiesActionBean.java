@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.sourceforge.stripes.action.*;
-import net.sourceforge.stripes.validation.Validate;
+import net.sourceforge.stripes.validation.*;
 import nl.b3p.brmo.verschil.util.ConfigUtil;
 import nl.b3p.brmo.verschil.util.ResultSetJSONSerializer;
 import nl.b3p.brmo.verschil.util.ResultSetSerializerException;
@@ -40,12 +40,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import net.sourceforge.stripes.validation.SimpleError;
-import net.sourceforge.stripes.validation.ValidationErrorHandler;
-import net.sourceforge.stripes.validation.ValidationErrors;
-import static net.sourceforge.stripes.validation.ValidationErrors.GLOBAL_ERROR;
-import net.sourceforge.stripes.validation.ValidationMethod;
-import net.sourceforge.stripes.validation.ValidationState;
 
 /**
  * Mutaties actionbean. Haalt mutaties uit de BRMO RSGB database voor de gegeven
@@ -91,7 +85,8 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
             .append("      q.ka_kad_gemeentecode=trim(LEADING '0' from b.ka_kad_gemeentecode) ")
             .append("  AND q.ka_sectie=b.ka_sectie ")
             .append("  AND q.ka_perceelnummer=trim(LEADING '0' from b.ka_perceelnummer) ")
-            .append("  AND coalesce(q.ka_deelperceelnummer,'')=coalesce(trim(LEADING '0' from b.ka_deelperceelnummer),'') ")
+            // deelperceel nummer wordt niet gevuld vanuit BRK want dat bestaat niet meer, dus ook niet in rsgb
+            //.append("  AND coalesce(q.ka_deelperceelnummer,'')=coalesce(trim(LEADING '0' from b.ka_deelperceelnummer),'') ")
             .append("  AND coalesce(q.ka_appartementsindex,'')=coalesce(trim(LEADING '0' from b.ka_appartementsindex),'') )").toString();
 
     // als gekoppeld wordt met een view
@@ -100,12 +95,14 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
             .append("      q.gemeentecode=trim(LEADING '0' from b.ka_kad_gemeentecode) ")
             .append("  AND q.sectie=b.ka_sectie ")
             .append("  AND q.perceelnummer=trim(LEADING '0' from b.ka_perceelnummer) ")
-            .append("  AND coalesce(q.deelperceelnummer,'')=coalesce(trim(LEADING '0' from b.ka_deelperceelnummer),'') ")
+            // deelperceel nummer wordt niet gevuld vanuit BRK want dat bestaat niet meer, dus ook niet in rsgb
+            //.append("  AND coalesce(q.deelperceelnummer,'')=coalesce(trim(LEADING '0' from b.ka_deelperceelnummer),'') ")
             .append("  AND coalesce(q.appartementsindex,'')=coalesce(trim(LEADING '0' from b.ka_appartementsindex),'') )").toString();
 
-    // grbuikte views waarvan evt een materialized versie gebruikt kan worden
+    // TODO gebruikte views waarvan evt een materialized versie gebruikt kan worden, evt. via context param configureerbaar maken.
     private final String VIEW_KOZ_RECHTHEBBENDE = "vb_koz_rechth"; // of mb_koz_rechth
-    private final String VIEW_KAD_ONRRND_ZK_ADRES = "vb_kad_onrrnd_zk_adres adr"; // of mb_kad_onrrnd_zk_adres adr
+    private final String VIEW_KAD_ONRRND_ZK_ADRES = "vb_kad_onrrnd_zk_adres"; // of mb_kad_onrrnd_zk_adres
+    private final String VIEW_KAD_ONRRND_ZK_ARCHIEF = "vb_kad_onrrnd_zk_archief"; // of mb_kad_onrrnd_zk_archief
 
     @ValidationMethod(when = ValidationState.NO_ERRORS)
     public void validateVanBeforeTot(ValidationErrors errors) {
@@ -130,8 +127,8 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 });
             });
         }
-        if (errors.get(GLOBAL_ERROR) != null) {
-            errors.get(GLOBAL_ERROR).stream().forEach((e) -> {
+        if (errors.get(ValidationErrors.GLOBAL_ERROR) != null) {
+            errors.get(ValidationErrors.GLOBAL_ERROR).stream().forEach((e) -> {
                 msg.append(e.getMessage(Locale.ROOT));
             });
         }
@@ -142,7 +139,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     @GET
     @DefaultHandler
     public Resolution get() throws IOException {
-        LOG.trace("get met params: van=" + van + " tot=" + tot);
+        LOG.trace("`get` met params: van=" + van + " tot=" + tot);
         LOG.info("Uitvoeren opdracht met params: van=" + df.format(van) + " tot=" + df.format(tot));
 
         // maak werkdirectory en werkbestand
@@ -173,7 +170,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         LOG.info("aantal nieuwe subjecten: " + nwSubject);
         // 2.9
         long bsn = this.getBSNAangevuld(workDir);
-        LOG.debug("aantal aangepast bsn: " + bsn);
+        LOG.info("aantal aangepast bsn: " + bsn);
 
         if (nwOnrrgd < 0 || gekoppeld < 0 || vervallen < 0 || verkopen < 0 || oppVeranderd < 0 || nwSubject < 0 || bsn < 0) {
             errorCondition = true;
@@ -223,12 +220,14 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
                 .append("o.kad_identif, ")
                 .append("o.dat_beg_geldh, ")
+                //
                 .append("b.ka_kad_gemeentecode, ")
                 .append("b.ka_perceelnummer, ")
                 .append("b.ka_deelperceelnummer, ")
                 .append("b.ka_sectie, ")
                 .append("b.ka_appartementsindex, ")
                 .append("b.kpr_nummer, ")
+                //
                 .append("q.grootte_perceel, ")
                 .append("q.x, ")
                 .append("q.y, ")
@@ -237,6 +236,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("z.fk_3avr_aand, ")
                 .append("avr.omschr_aard_verkregenr_recht, ")
                 .append("h.fk_sc_rh_koz_kad_identif AS ontstaan_uit ")
+                // .append("h.fk_sc_lh_koz_kad_identif AS overgegaan_in ")
                 .append("from kad_onrrnd_zk o ")
                 // samengestelde app_re en kad_perceel als q
                 .append("LEFT JOIN (SELECT  ")
@@ -275,13 +275,10 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief,
                 // maar niet in de archief tabel met een datum voor "van".
                 .append("WHERE '[")
-                .append(df.format(van))
-                .append(",")
-                .append(df.format(tot))
-                .append("]'::DATERANGE @> dat_beg_geldh::date ")
-                .append("AND kad_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
-                .append(df.format(van))
-                .append("'::date < dat_beg_geldh::date) ")
+                .append(df.format(van)).append(",").append(df.format(tot))
+                .append("]'::DATERANGE @> o.dat_beg_geldh::date ")
+                .append("AND o.kad_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
+                .append(df.format(van)).append("'::date < dat_beg_geldh::date) ")
                 .append("AND z.fk_8pes_sc_identif IS NOT null");
 
         switch (f) {
@@ -294,10 +291,11 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     }
 
     /**
-     * ophalen gekoppelde objecten [2.4].
+     * ophalen gekoppelde objecten [2.4]. Nieuwe objecten met bijbehoren adres
+     * en/of adresbeschrijving.
      *
      * @param workDir directory waar resultaat wordt neergezet
-     * @return aantal gekoppeld
+     * @return aantal gekoppelde objecten
      */
     private long getGekoppeldeObjecten(File workDir) {
         StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
@@ -314,13 +312,9 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("adr.huisnummer_toev, ")
                 .append("adr.woonplaats, ")
                 .append("adr.postcode ")
-                .append("FROM ")
-                .append(VIEW_KAD_ONRRND_ZK_ADRES)
+                .append("FROM ").append(VIEW_KAD_ONRRND_ZK_ADRES).append(" adr ")
                 .append(" WHERE '[")
-                .append(df.format(van))
-                .append(",")
-                .append(df.format(tot))
-                .append("]'::DATERANGE @> adr.begin_geldigheid::date ")
+                .append(df.format(van)).append(",").append(df.format(tot)).append("]'::DATERANGE @> adr.begin_geldigheid::date ")
                 .append("AND adr.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
                 .append(df.format(van))
                 .append("'::date < dat_beg_geldh::date) ");
@@ -334,49 +328,33 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     }
 
     /**
-     * ophalen vervallen percelen en appartementsrechten. [2.5]
+     * ophalen vervallen percelen en appartementsrechten. [2.5] Het jongste
+     * archief record van een object dat niet meer in de actuele tabel voorkomt.
      *
      * @param workDir directory waar resultaat wordt neergezet
      * @return aantal vervallen
      */
     private long getVervallenOnroerendGoed(File workDir) {
-        StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (k.kad_identif)")
-                .append("k.kad_identif, ")
-                .append("k.datum_einde_geldh, ")
-                //
-                .append("q.ka_kad_gemeentecode, ")
-                .append("q.ka_sectie, ")
-                .append("q.ka_perceelnummer, ")
-                .append("q.ka_deelperceelnummer, ")
-                .append("q.ka_appartementsindex ")
-                //
-                .append("FROM kad_onrrnd_zk_archief k ")
-                // samengestelde app_re en kad_perceel als q
-                .append("LEFT JOIN (SELECT ")
-                .append("ar.sc_kad_identif, ")
-                .append("ar.ka_kad_gemeentecode, ")
-                .append("ar.ka_perceelnummer, ")
-                .append("null AS ka_deelperceelnummer, ")
-                .append("ar.ka_sectie, ")
-                .append("ar.ka_appartementsindex ")
-                .append("FROM app_re_archief ar ")
-                .append("UNION ALL SELECT ")
-                .append("p.sc_kad_identif, ")
-                .append("p.ka_kad_gemeentecode, ")
-                .append("p.ka_perceelnummer, ")
-                .append("p.ka_deelperceelnummer, ")
-                .append("p.ka_sectie, ")
-                .append("null AS ka_appartementsindex ")
-                .append("FROM kad_perceel_archief p) q ")
-                // einde samenstelling app_re en kad_perceel als q
-                .append("ON k.kad_identif=q.sc_kad_identif ")
+        StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (arch.koz_identif) ")
+                // TODO data uit RSGB heeft geen 0-padding
+                .append("arch.koz_identif, ")
+                .append("arch.eind_geldigheid, ")
+                .append("arch.gemeentecode, ")
+                .append("arch.sectie, ")
+                .append("arch.perceelnummer, ")
+                .append("arch.deelperceelnummer, ")
+                .append("arch.appartementsindex ")
+                .append("FROM ")
+                .append(VIEW_KAD_ONRRND_ZK_ARCHIEF)
+                .append(" arch ")
+                // object heeft archief record in gevraagde periode
                 .append("WHERE '[")
-                .append(df.format(van))
-                .append(",")
-                .append(df.format(tot))
-                .append("]'::DATERANGE @> k.datum_einde_geldh::date ")
-                .append("AND k.kad_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk) ")
-                .append("ORDER BY k.kad_identif, k.datum_einde_geldh::date DESC");
+                .append(df.format(van)).append(",").append(df.format(tot))
+                .append("]'::DATERANGE @> arch.eind_geldigheid::date ")
+                // object niet meer in actuele tabel
+                .append("AND arch.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk) ")
+                // alleen de jongste archief record
+                .append("ORDER BY arch.koz_identif, arch.eind_geldigheid::date DESC");
 
         switch (f) {
             case "csv":
@@ -388,22 +366,19 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     }
 
     /**
-     * ophalen gewijzigde oppervlakte. [2.7]
+     * Ophalen gewijzigde oppervlakte [2.7]. Jongste archief perceel die in de
+     * periode waarvan de oppervlakte anders is dan het actuele perceel.
      */
     private long getGewijzigdeOpp(File workDir) {
-        // jongste archief perceel die in de periode waarvan de
-        // oppervlakte anders is dan het actuele perceel
         StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (za.kad_identif) ")
                 .append("za.kad_identif, ")
                 .append("za.dat_beg_geldh, ")
                 .append("pa.grootte_perceel AS opp_oud, ")
                 .append("k.grootte_perceel  AS opp_actueel ")
                 .append("FROM kad_onrrnd_zk_archief za, kad_perceel_archief pa, kad_perceel k ")
-                // moet in de archief zitten in gevraagde periode
+                // perceelmoet in de archief zitten in gevraagde periode
                 .append("WHERE '[")
-                .append(df.format(van))
-                .append(",")
-                .append(df.format(tot))
+                .append(df.format(van)).append(",").append(df.format(tot))
                 .append("]'::DATERANGE @> za.dat_beg_geldh::DATE ")
                 .append("AND za.dat_beg_geldh    = pa.sc_dat_beg_geldh ")
                 .append("AND za.kad_identif      = pa.sc_kad_identif ")
@@ -411,15 +386,11 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("AND pa.grootte_perceel != k.grootte_perceel ")
                 // dubbelop vanwege grootte_perceel check
                 // .append("AND za.clazz            = 'KADASTRAAL PERCEEL' ")
-                // moet in de actueel zitten in de periode, anders vervallen of datafout
+                // perceel moet in de actueel zitten in de periode, anders vervallen of datafout
                 .append("AND za.kad_identif IN ( SELECT kad_identif FROM kad_onrrnd_zk ")
                 .append("WHERE '[")
-                .append(df.format(van))
-                .append(",")
-                .append(df.format(tot))
+                .append(df.format(van)).append(",").append(df.format(tot))
                 .append("]'::DATERANGE @> dat_beg_geldh::DATE ) ")
-                // test geval op 2017-12-22 in Testset
-                // .append("AND za.kad_identif = 57590619170000 ")
                 .append("ORDER BY za.kad_identif, za.dat_beg_geldh DESC");
 
         switch (f) {
@@ -441,18 +412,21 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         StringBuilder sql = new StringBuilder("SELECT ")
                 .append("DISTINCT bron.ref_id, ")
                 .append("bron.datum::text, ")
+                //
                 .append("b.ka_kad_gemeentecode, ")
                 .append("b.ka_sectie, ")
                 .append("b.ka_perceelnummer, ")
                 .append("b.ka_deelperceelnummer, ")
                 .append("b.ka_appartementsindex, ")
                 .append("b.kpr_nummer, ")
+                //
                 .append("z.ar_teller, ")
                 .append("z.ar_noemer, ")
                 .append("z.fk_3avr_aand, ")
                 .append("avr.omschr_aard_verkregenr_recht ")
                 // verkoop + datum
-                .append("FROM ( SELECT brondocument.ref_id, max(brondocument.datum) AS datum FROM brondocument WHERE brondocument.omschrijving = 'Akte van Koop en Verkoop' GROUP BY brondocument.ref_id) bron ")
+                .append("FROM ( ")
+                .append("  SELECT brondocument.ref_id, max(brondocument.datum) AS datum FROM brondocument WHERE brondocument.omschrijving = 'Akte van Koop en Verkoop' GROUP BY brondocument.ref_id) bron ")
                 // samengestelde app_re en kad_perceel als q
                 .append("LEFT JOIN (SELECT  ")
                 .append("ar.sc_kad_identif, ")
@@ -471,20 +445,14 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("null AS ka_appartementsindex ")
                 .append("FROM kad_perceel p) q ")
                 // einde samenstelling app_re en kad_perceel als q
+
                 .append("ON bron.ref_id=q.sc_kad_identif::text ")
                 .append("LEFT JOIN zak_recht z ON bron.ref_id=z.fk_7koz_kad_identif::text ")
                 .append("LEFT JOIN aard_verkregen_recht avr ON z.fk_3avr_aand=avr.aand ")
                 .append("JOIN ")
-//                .append("belastingplichtige b ON ( q.ka_kad_gemeentecode=b.ka_kad_gemeentecode ")
-//                .append("AND q.ka_sectie=b.ka_sectie ")
-//                .append("AND q.ka_perceelnummer=b.ka_perceelnummer ")
-//                .append("AND coalesce(q.ka_deelperceelnummer,'')=coalesce(b.ka_deelperceelnummer,'') ")
-//                .append("AND coalesce(q.ka_appartementsindex,'')=coalesce(b.ka_appartementsindex,'') ) ")
                 .append(BP_JOIN_CLAUSE)
                 .append("WHERE '[")
-                .append(df.format(van))
-                .append(",")
-                .append(df.format(tot))
+                .append(df.format(van)).append(",").append(df.format(tot))
                 .append("]'::DATERANGE @> bron.datum ")
                 .append("AND z.fk_8pes_sc_identif IS NOT null");
 
@@ -498,7 +466,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     }
 
     /**
-     * nieuwe subjecten. [2.8]. De voor het systeem nieuwe subjecten zijn de
+     * Nieuwe subjecten [2.8]. De voor het systeem nieuwe subjecten zijn de
      * subjecten van nieuwe kadastrale objecten die niet aan de
      * belastingplichtige kunnen worden gekoppeld.
      *
@@ -507,17 +475,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      */
     private long getNieuweSubjecten(File workDir) {
         StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (q.naam) ")
-                //--o.koz_identif,
                 .append("q.begin_geldigheid, ")
-                /*
-                q.gemeentecode,
-                q.perceelnummer,
-                q.deelperceelnummer,
-                q.sectie,
-                q.appartementsindex,
-                q.aandeel,
-                q.omschr_aard_verkregenr_recht,
-                 */
                 .append("q.soort, ")
                 .append("q.geslachtsnaam, ")
                 .append("q.voorvoegsel, ")
@@ -535,29 +493,20 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("q.huisnummer_toev, ")
                 .append("q.postcode, ")
                 .append("q.woonplaats ")
-                //--b.kpr_nummer
+                // altijd null: b.kpr_nummer
                 .append("FROM ").append(VIEW_KOZ_RECHTHEBBENDE).append(" q ")
                 .append("LEFT JOIN ")
-//                .append("belastingplichtige b ON (")
-//                .append("      q.gemeentecode=b.ka_kad_gemeentecode ")
-//                .append("  AND q.sectie=b.ka_sectie ")
-//                .append("  AND q.perceelnummer=b.ka_perceelnummer ")
-//                .append("  AND COALESCE(q.deelperceelnummer,'')=COALESCE(b.ka_deelperceelnummer,'') ")
-//                .append("  AND COALESCE(q.appartementsindex,'')=COALESCE(b.ka_appartementsindex,'') )")
                 .append(BP_JOIN_CLAUSE_V)
                 // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief,
                 // maar niet in de archief tabel met een datum voor "van".
                 .append("WHERE '[")
-                .append(df.format(van))
-                .append(",")
-                .append(df.format(tot))
+                .append(df.format(van)).append(",").append(df.format(tot))
                 .append("]'::DATERANGE @> q.begin_geldigheid::date ")
                 .append("AND q.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
-                .append(df.format(van))
-                .append("'::date < dat_beg_geldh::date) ")
-                //-- die niet gekoppeld kunnen worden
+                .append(df.format(van)).append("'::date < dat_beg_geldh::date) ")
+                // die niet gekoppeld kunnen worden
                 .append("AND b.kpr_nummer IS NULL ")
-                //-- alleen de eerste naam met de oudste datum
+                // alleen de eerste naam met de oudste datum
                 .append("ORDER BY q.naam, q.begin_geldigheid ASC");
 
         switch (f) {
@@ -570,26 +519,26 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     }
 
     /**
-     * [2.9].
+     * Nieuwe subjecten in de gevraagde periode [2.9]. Nieuwe subjecten hebben
+     * een record in de herkomst_metadata tabel met verwijzing naar subject en
+     * met een datum binnen de gevraagde periode en zitten ook in de
+     * ander_nat_prs tabel (want die zijn niet ingeschreven/geen bsn).
      *
      * @param workDir directory waar resultaat wordt neergezet
      * @return aantal bsn bijgewerkt
      */
     private long getBSNAangevuld(File workDir) {
         StringBuilder sql = new StringBuilder("SELECT ")
-                .append("i.bsn, ")
-                .append("h.datum::TEXT ")
-                // TODO (?)KPR nummer
-                // waar komt dat dan vandaan?
-                .append("FROM ingeschr_nat_prs i ")
-                .append("LEFT JOIN herkomst_metadata h ON ")
-                .append("i.sc_identif = h.waarde ")
-                .append("WHERE i.sc_identif IN (SELECT sc_identif FROM ander_nat_prs) ")
-                .append("AND h.tabel='subject' ")
+                .append("inp.bsn, ")
+                .append("hm.datum::TEXT ")
+                // (?)KPR nummer kan niet want er was toch geen bsn bekend dus waar komt dat dan vandaan?
+                .append("FROM ingeschr_nat_prs inp ")
+                .append("LEFT JOIN herkomst_metadata hm ON ")
+                .append("inp.sc_identif = hm.waarde ")
+                .append("WHERE inp.sc_identif IN (SELECT sc_identif FROM ander_nat_prs) ")
+                .append("AND hm.tabel='subject' ")
                 .append("AND '[")
-                .append(df.format(van))
-                .append(",")
-                .append(df.format(tot))
+                .append(df.format(van)).append(",").append(df.format(tot))
                 .append("]'::DATERANGE @> datum::DATE ");
 
         switch (f) {
