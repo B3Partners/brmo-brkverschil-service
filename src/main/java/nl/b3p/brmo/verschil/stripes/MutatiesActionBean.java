@@ -23,7 +23,6 @@ import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.validation.*;
 import nl.b3p.brmo.verschil.util.ConfigUtil;
 import nl.b3p.brmo.verschil.util.ResultSetJSONSerializer;
-import nl.b3p.brmo.verschil.util.ResultSetSerializerException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -99,10 +98,30 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
             //.append("  AND coalesce(q.deelperceelnummer,'')=coalesce(trim(LEADING '0' from b.ka_deelperceelnummer),'') ")
             .append("  AND coalesce(q.appartementsindex,'')=coalesce(trim(LEADING '0' from b.ka_appartementsindex),'') )").toString();
 
-    // TODO gebruikte views waarvan evt een materialized versie gebruikt kan worden, evt. via context param configureerbaar maken.
-    private final String VIEW_KOZ_RECHTHEBBENDE = "vb_koz_rechth"; // of mb_koz_rechth
-    private final String VIEW_KAD_ONRRND_ZK_ADRES = "vb_kad_onrrnd_zk_adres"; // of mb_kad_onrrnd_zk_adres
-    private final String VIEW_KAD_ONRRND_ZK_ARCHIEF = "vb_kad_onrrnd_zk_archief"; // of mb_kad_onrrnd_zk_archief
+    /**
+     * context param voor view vb_koz_rechth.
+     *
+     * @see #initParams()
+     */
+    private String VIEW_KOZ_RECHTHEBBENDE = "vb_koz_rechth";
+    /**
+     * context param voor view vb_kad_onrrnd_zk_adres.
+     *
+     * @see #initParams()
+     */
+    private String VIEW_KAD_ONRRND_ZK_ADRES = "vb_kad_onrrnd_zk_adres";
+    /**
+     * context param voor view vb_kad_onrrnd_zk_archief.
+     *
+     * @see #initParams()
+     */
+    private String VIEW_KAD_ONRRND_ZK_ARCHIEF = "vb_kad_onrrnd_zk_archief";
+    /**
+     * context param voor view JDBC_FETCH_SIZE.
+     *
+     * @see #initParams()
+     */
+    private int JDBC_FETCH_SIZE = 1000;
 
     @ValidationMethod(when = ValidationState.NO_ERRORS)
     public void validateVanBeforeTot(ValidationErrors errors) {
@@ -139,9 +158,9 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     @GET
     @DefaultHandler
     public Resolution get() throws IOException {
-        LOG.trace("`get` met params: van=" + van + " tot=" + tot);
+        LOG.trace("`get` met params: van=" + van + " tot=" + tot + ", format: " + f);
         LOG.info("Uitvoeren opdracht met params: van=" + df.format(van) + " tot=" + df.format(tot));
-
+        this.initParams();
         // maak werkdirectory en werkbestand
         Path workPath = Files.createTempDirectory(Paths.get(System.getProperty("java.io.tmpdir")), "brkmutsvc", PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxr-x---")));
         File workDir = workPath.toFile();
@@ -151,26 +170,33 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
 
         // uitvoeren queries
         // 2.3
+        LOG.debug("Ophalen nieuwe onroerende zaken");
         long nwOnrrgd = this.getNieuweOnroerendGoed(workDir);
-        LOG.info("aantal nieuwe onroerende zaken is: " + nwOnrrgd);
+        LOG.info("Aantal nieuwe onroerende zaken is: " + nwOnrrgd);
         // 2.4
+        LOG.debug("Ophalen nieuwe onroerende zaken");
         long gekoppeld = this.getGekoppeldeObjecten(workDir);
-        LOG.info("aantal gekoppelde objecten: " + gekoppeld);
+        LOG.info("Aantal gekoppelde objecten: " + gekoppeld);
         // 2.5
+        LOG.debug("Ophalen vervallen objecten");
         long vervallen = this.getVervallenOnroerendGoed(workDir);
-        LOG.info("aantal vervallen: " + vervallen);
+        LOG.info("Aantal vervallen: " + vervallen);
         // 2.6
+        LOG.debug("Ophalen object verkopen");
         long verkopen = this.getVerkopen(workDir);
-        LOG.info("aantal verkopen: " + verkopen);
+        LOG.info("Aantal verkopen: " + verkopen);
         // 2.7
+        LOG.debug("Ophalen oppervlakte veranderd objecten");
         long oppVeranderd = this.getGewijzigdeOpp(workDir);
-        LOG.info("aantal oppervlakte veranderd: " + oppVeranderd);
+        LOG.info("Aantal oppervlakte veranderd: " + oppVeranderd);
         // 2.8
+        LOG.debug("Ophalen nieuwe subjecten");
         long nwSubject = this.getNieuweSubjecten(workDir);
-        LOG.info("aantal nieuwe subjecten: " + nwSubject);
+        LOG.info("Aantal nieuwe subjecten: " + nwSubject);
         // 2.9
+        LOG.debug("Ophalen BSN aangepast");
         long bsn = this.getBSNAangevuld(workDir);
-        LOG.info("aantal aangepast bsn: " + bsn);
+        LOG.info("Aantal aangepast bsn: " + bsn);
 
         if (nwOnrrgd < 0 || gekoppeld < 0 || vervallen < 0 || verkopen < 0 || oppVeranderd < 0 || nwSubject < 0 || bsn < 0) {
             errorCondition = true;
@@ -411,7 +437,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     private long getVerkopen(File workDir) {
         StringBuilder sql = new StringBuilder("SELECT ")
                 .append("DISTINCT bron.ref_id, ")
-                .append("bron.datum::text, ")
+                .append("bron.datum::text as verkoopdatum, ")
                 //
                 .append("b.ka_kad_gemeentecode, ")
                 .append("b.ka_sectie, ")
@@ -445,7 +471,6 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("null AS ka_appartementsindex ")
                 .append("FROM kad_perceel p) q ")
                 // einde samenstelling app_re en kad_perceel als q
-
                 .append("ON bron.ref_id=q.sc_kad_identif::text ")
                 .append("LEFT JOIN zak_recht z ON bron.ref_id=z.fk_7koz_kad_identif::text ")
                 .append("LEFT JOIN aard_verkregen_recht avr ON z.fk_3avr_aand=avr.aand ")
@@ -577,8 +602,8 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 }
 
                 stm.setFetchDirection(ResultSet.FETCH_FORWARD);
-                stm.setFetchSize(1000);
-                LOG.trace(stm);
+                stm.setFetchSize(JDBC_FETCH_SIZE);
+                LOG.debug(stm);
 
                 SimpleModule module = new SimpleModule();
                 ResultSetJSONSerializer serializer = new ResultSetJSONSerializer();
@@ -594,15 +619,14 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 count = serializer.getCount();
             }
 
-        } catch (SQLException | FileNotFoundException | ResultSetSerializerException e) {
+        } catch (SQLException | IOException e) {
             LOG.error(
                     String.format("Fout tijdens ophalen en uitschrijven gegevens (sql: %s, bestand: %s %s",
                             sql,
                             workDir,
                             bestandsNaam), e);
-        } finally {
-            return count;
         }
+        return count;
     }
 
     private long queryToCSV(File workDir, String bestandsNaam, String sql, String... params) {
@@ -621,8 +645,8 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 }
 
                 stm.setFetchDirection(ResultSet.FETCH_FORWARD);
-                stm.setFetchSize(1000);
-                LOG.trace(stm);
+                stm.setFetchSize(JDBC_FETCH_SIZE);
+                LOG.debug(stm);
 
                 try (ResultSet r = stm.executeQuery();
                         FileOutputStream fos = new FileOutputStream(workDir + File.separator + bestandsNaam);
@@ -658,14 +682,31 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                     }
                 }
             }
-        } catch (SQLException | FileNotFoundException e) {
+        } catch (SQLException | IOException e) {
             LOG.error(
                     String.format("Fout tijdens ophalen en uitschrijven gegevens (sql: %s, bestand: %s %s",
                             sql,
                             workDir,
                             bestandsNaam), e);
-        } finally {
-            return count;
+        }
+        return count;
+    }
+
+    private void initParams() {
+        LOG.debug("laden van context params");
+        boolean use_mv = Boolean.parseBoolean(getContext().getServletContext().getInitParameter("use_mv"));
+        if (use_mv) {
+            LOG.info("Gebruik materialized views in de queries.");
+            VIEW_KOZ_RECHTHEBBENDE = VIEW_KOZ_RECHTHEBBENDE.replaceFirst("vb_", "mb_");
+            VIEW_KAD_ONRRND_ZK_ADRES = VIEW_KAD_ONRRND_ZK_ADRES.replaceFirst("vb_", "mb_");
+            VIEW_KAD_ONRRND_ZK_ARCHIEF = VIEW_KAD_ONRRND_ZK_ARCHIEF.replaceFirst("vb_", "mb_");
+        }
+
+        try {
+            JDBC_FETCH_SIZE = Integer.parseInt(getContext().getServletContext().getInitParameter("jdbc_fetch_size"));
+            LOG.debug("Gebruik fetch size van " + JDBC_FETCH_SIZE);
+        } catch (Exception e) {
+            // ignore
         }
     }
 

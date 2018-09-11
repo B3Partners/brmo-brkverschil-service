@@ -7,4 +7,8 @@
            userNameCol="gebruikersnaam" userRoleTable="gebruiker_groepen" userTable="gebruiker_">
         <CredentialHandler algorithm="SHA-1" className="org.apache.catalina.realm.MessageDigestCredentialHandler"/>
     </Realm>
+    <!-- true om materialized views te gebruiken in de queries -->
+    <Parameter name="use_mv" value="true"/>
+    <!-- database recordset fetch size -->
+    <Parameter name="jdbc_fetch_size" value="1000"/>
 </Context>
