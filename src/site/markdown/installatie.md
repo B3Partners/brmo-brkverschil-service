@@ -7,6 +7,12 @@ Indien gewenst kan het wachtwoord worden aangepast, in de database staat de SHA1
 In de **rsgb** database dient een tabel `belastingplichtige` te worden aangemaakt, gebruik hiervoor
 het script `create_belastingplichtige.sql`, na het aanmaken van deze tabel kan deze worden gevuld vanuit een CSV bestand of via ETL.
 
+```sql
+TRUNCATE TABLE belastingplichtige;
+COPY belastingplichtige(ka_kad_gemeentecode,ka_sectie,ka_perceelnummer,ka_deelperceelnummer,ka_appartementsindex,kpr_nummer)
+FROM '../brmo-brkverschil-service/data/b3eigwb.csv' DELIMITER ';' CSV;
+```
+
 
 ## Webapplicatie
 

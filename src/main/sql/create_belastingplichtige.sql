@@ -1,20 +1,23 @@
-DROP TABLE public.belastingplichtige;
+-- drop en maak de belastingplichtige tabel aan
+DROP TABLE public.belastingplichtige cascade;
 
 CREATE TABLE public.belastingplichtige (
-  ka_kad_gemeentecode character varying(6),
-  ka_sectie character varying(3),
-  ka_perceelnummer character varying(5),
-  ka_deelperceelnummer character varying(4),
-  ka_appartementsindex character varying(4),
-  kpr_nummer character varying(16),
-  id bigserial NOT NULL,
+  ka_kad_gemeentecode  character varying(6) NOT NULL,
+  ka_sectie            character varying(3) NOT NULL,
+  ka_perceelnummer     character varying(6) NOT NULL,
+  ka_deelperceelnummer character varying(6),
+  ka_appartementsindex character varying(6),
+  kpr_nummer           character varying(18),
+  id                   bigserial NOT NULL,
   CONSTRAINT belastingplichtige_pkey PRIMARY KEY (id)
 )
 WITH (
   OIDS = FALSE
 );
 
-COMMENT ON TABLE public.belastingplichtige IS 'Belastingplichtigen uit GIBS';
+CREATE INDEX ON public.belastingplichtige (ka_kad_gemeentecode, ka_sectie, ka_perceelnummer);
+
+COMMENT ON TABLE public.belastingplichtige IS 'Belastingplichtigen uit GIBS - niet-RSGB tabel';
 COMMENT ON COLUMN public.belastingplichtige.ka_kad_gemeentecode IS 'Groepsattribuut Kadastrale aanduiding APPARTEMENTSRECHT.Kadastrale gemeentecode - Kadastrale gemeentecode';
 COMMENT ON COLUMN public.belastingplichtige.ka_sectie IS 'Groepsattribuut Kadastrale aanduiding APPARTEMENTSRECHT.Sectie - Sectie met voorloop nullen';
 COMMENT ON COLUMN public.belastingplichtige.ka_perceelnummer IS 'Groepsattribuut Kadastrale aanduiding APPARTEMENTSRECHT.Perceelnummer - Perceelnummer met voorloop nullen';
