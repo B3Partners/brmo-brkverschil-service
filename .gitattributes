@@ -1,0 +1,5 @@
+* text=auto
+*.sql eol=lf
+*.sql text eol=lf
+*.geojson filter=lfs diff=lfs merge=lfs -text
+*.csv filter=lfs diff=lfs merge=lfs -text

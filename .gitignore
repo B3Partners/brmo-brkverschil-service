@@ -18,5 +18,6 @@ nb-configuration.xml
 *.iml
 
 temp/
+data/
 
 src/test/resources/local.*.properties
