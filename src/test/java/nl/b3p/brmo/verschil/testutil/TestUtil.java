@@ -18,10 +18,10 @@ package nl.b3p.brmo.verschil.testutil;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.client.LaxRedirectStrategy;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.*;
 import org.apache.tomcat.dbcp.dbcp.BasicDataSource;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -65,11 +65,18 @@ public abstract class TestUtil {
      */
     @BeforeAll
     public static void setUpHttpClient() {
+        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        credsProvider.setCredentials(
+                new AuthScope("localhost", 9090),
+                new UsernamePasswordCredentials("mutaties", "mutaties")
+        );
+
         client = HttpClients.custom()
                 .useSystemProperties()
                 .setUserAgent("brmo verschil service integration test")
                 .setRedirectStrategy(new LaxRedirectStrategy())
                 .setDefaultCookieStore(new BasicCookieStore())
+                .setDefaultCredentialsProvider(credsProvider)
                 .build();
     }
 

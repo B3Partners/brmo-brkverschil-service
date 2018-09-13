@@ -5,4 +5,5 @@
 <%@taglib prefix="stripes" uri="http://stripes.sourceforge.net/stripes.tld" %>
 
 <c:set var="contextPath" value="${pageContext.request.contextPath}"/>
+<c:set var="contextService" value="${pageContext.request.scheme}://${pageContext.request.serverName}:${pageContext.request.serverPort}" />
 <c:set var="timeFormat" value="dd MMM yyyy 'om' HH:mm:ss" />

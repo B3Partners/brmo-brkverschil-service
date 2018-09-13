@@ -21,3 +21,5 @@ De applicatie gebruikt dezelfde JNDI databronnen als de `brmo-service`.
 De GUI van de applicatie is te breiken op [http://server:poort/brmo-brkverschil-service/].
 Aanmelden met (default) `mutaties` / `mutaties`
 
+De REST services zijn met BASIC authenticatie beveiligd, de webapplicatie zelf
+is met FORM based authenticatie beveiligd.
