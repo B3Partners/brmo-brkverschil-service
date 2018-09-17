@@ -32,7 +32,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -162,7 +161,10 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         LOG.info("Uitvoeren opdracht met params: van=" + df.format(van) + " tot=" + df.format(tot));
         this.initParams();
         // maak werkdirectory en werkbestand
-        Path workPath = Files.createTempDirectory(Paths.get(System.getProperty("java.io.tmpdir")), "brkmutsvc", PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxr-x---")));
+        Path workPath = Files.createTempDirectory(
+                Paths.get(System.getProperty("java.io.tmpdir")),
+                "brkmutsvc"
+        );
         File workDir = workPath.toFile();
         workDir.deleteOnExit();
         File workZip = Files.createTempFile("brkmutsvc", ".zip").toFile();
