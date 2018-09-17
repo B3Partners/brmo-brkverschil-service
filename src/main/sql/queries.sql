@@ -60,7 +60,7 @@ LEFT JOIN
 ON
     o.kad_identif = h.fk_sc_lh_koz_kad_identif
 JOIN
-    belastingplichtige b
+    tax.belastingplichtige b
 ON
     (
         q.ka_kad_gemeentecode = trim(LEADING '0' FROM b.ka_kad_gemeentecode)
@@ -189,7 +189,7 @@ LEFT JOIN
 ON
     z.fk_3avr_aand = avr.aand
 JOIN
-    belastingplichtige b
+    tax.belastingplichtige b
 ON
     (
         q.ka_kad_gemeentecode = trim(LEADING '0' FROM b.ka_kad_gemeentecode)
@@ -255,7 +255,7 @@ ON
 FROM
     vb_koz_rechth q
 LEFT JOIN
-    belastingplichtige b
+    tax.belastingplichtige b
 ON
     (
         q.gemeentecode = trim(LEADING '0' FROM b.ka_kad_gemeentecode)
