@@ -80,7 +80,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
 
     // als gekoppeld wordt met een table
     private static final String BP_JOIN_CLAUSE = new StringBuilder()
-            .append("belastingplichtige b ON ( ")
+            .append("tax.belastingplichtige b ON ( ")
             .append("      q.ka_kad_gemeentecode=trim(LEADING '0' from b.ka_kad_gemeentecode) ")
             .append("  AND q.ka_sectie=b.ka_sectie ")
             .append("  AND q.ka_perceelnummer=trim(LEADING '0' from b.ka_perceelnummer) ")
@@ -90,7 +90,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
 
     // als gekoppeld wordt met een view
     private static final String BP_JOIN_CLAUSE_V = new StringBuilder()
-            .append("belastingplichtige b ON ( ")
+            .append("tax.belastingplichtige b ON ( ")
             .append("      q.gemeentecode=trim(LEADING '0' from b.ka_kad_gemeentecode) ")
             .append("  AND q.sectie=b.ka_sectie ")
             .append("  AND q.perceelnummer=trim(LEADING '0' from b.ka_perceelnummer) ")

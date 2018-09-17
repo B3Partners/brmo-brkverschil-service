@@ -4,12 +4,12 @@
 
 In de **staging** database dient een gebruiker te worden toegevoegd, gebruik hiervoor het script `insert_user.sql`.
 Indien gewenst kan het wachtwoord worden aangepast, in de database staat de SHA1 hash van het wachtwoord.
-In de **rsgb** database dient een tabel `belastingplichtige` te worden aangemaakt, gebruik hiervoor
+In de **rsgb** database dient een schema `tax`  met daarin een tabel `belastingplichtige` te worden aangemaakt, gebruik hiervoor
 het script `create_belastingplichtige.sql`, na het aanmaken van deze tabel kan deze worden gevuld vanuit een CSV bestand of via ETL.
 
 ```sql
-TRUNCATE TABLE belastingplichtige;
-COPY belastingplichtige(ka_kad_gemeentecode,ka_sectie,ka_perceelnummer,ka_deelperceelnummer,ka_appartementsindex,kpr_nummer)
+TRUNCATE TABLE tax.belastingplichtige;
+COPY tax.belastingplichtige(ka_kad_gemeentecode,ka_sectie,ka_perceelnummer,ka_deelperceelnummer,ka_appartementsindex,kpr_nummer)
 FROM '../brmo-brkverschil-service/data/b3eigwb.csv' DELIMITER ';' CSV;
 ```
 
