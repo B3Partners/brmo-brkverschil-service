@@ -411,6 +411,11 @@
                     <version>3.0.0</version>
                 </plugin>
                 <plugin>
+                    <groupId>de.jutzig</groupId>
+                    <artifactId>github-release-plugin</artifactId>
+                    <version>1.2.0</version>
+                </plugin>
+                <plugin>
                     <groupId>org.owasp</groupId>
                     <artifactId>dependency-check-maven</artifactId>
                     <version>3.3.1</version>
@@ -612,6 +617,7 @@
                 <configuration>
                     <pushChanges>true</pushChanges>
                     <releaseProfiles>zip</releaseProfiles>
+                    <tagNameFormat>@{project.artifactId}-@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
         </plugins>
@@ -845,6 +851,23 @@
                         </executions>
                     </plugin>
                     <!-- TODO auto upload van zipfile naar GH release -->
+                    <plugin>
+                        <groupId>de.jutzig</groupId>
+                        <artifactId>github-release-plugin</artifactId>
+                        <configuration>
+                            <description>Description of your release</description>
+                            <releaseName>v${project.version}</releaseName>
+                            <tag>@{project.artifactId}-@{project.version}</tag>
+                            <fileSets>
+                                <fileSet>
+                                    <directory>${project.build.directory}</directory>
+                                    <includes>
+                                        <include>${project.build.finalName}-${project.version}-bin.zip</include>
+                                    </includes>
+                                </fileSet>
+                            </fileSets>
+                        </configuration>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
