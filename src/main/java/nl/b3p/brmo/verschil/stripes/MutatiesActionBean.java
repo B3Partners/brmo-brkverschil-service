@@ -157,6 +157,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     @GET
     @DefaultHandler
     public Resolution get() throws IOException {
+        errorCondition = false;
         LOG.trace("`get` met params: van=" + van + " tot=" + tot + ", format: " + f);
         LOG.info("Uitvoeren opdracht met params: van=" + df.format(van) + " tot=" + df.format(tot));
         this.initParams();
@@ -202,6 +203,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
 
         if (nwOnrrgd < 0 || gekoppeld < 0 || vervallen < 0 || verkopen < 0 || oppVeranderd < 0 || nwSubject < 0 || bsn < 0) {
             errorCondition = true;
+            LOG.trace("Een van de queries heeft een onverwacht resultaat gegeven, errorCondition="+errorCondition);
         }
         // zippen resultaat in workZip
         try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(workZip.toPath()))) {
@@ -226,7 +228,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
             public void stream(HttpServletResponse response) throws Exception {
                 copied = FileUtils.copyFile(workZip, response.getOutputStream());
                 LOG.debug("bytes copied: " + copied);
-                if (!errorCondition) {
+                if (errorCondition) {
                     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 }
                 FileUtils.deleteQuietly(workDir);

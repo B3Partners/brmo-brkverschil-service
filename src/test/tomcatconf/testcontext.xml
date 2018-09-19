@@ -37,8 +37,10 @@
            userRoleTable="gebruiker_groepen"
            userTable="gebruiker_"
            dataSourceName="jdbc/brmo/staging"
-           localDataSource="true"
-    />
+           localDataSource="true">
+        <CredentialHandler className="org.apache.catalina.realm.MessageDigestCredentialHandler"
+                       algorithm="SHA-1" />
+    </Realm>
 
     <!-- Realm allRolesMode="authOnly"
            className="org.apache.catalina.realm.JDBCRealm"
@@ -49,6 +51,8 @@
            userRoleTable="gebruiker_groepen"
            userTable="gebruiker_"
            driverName="${jdbc.driverClassName}"
-           connectionURL="${staging.url}?user=${staging.username}&amp;password=${staging.password}"
-    / -->
+           connectionURL="${staging.url}?user=${staging.username}&amp;password=${staging.password}">
+        <CredentialHandler className="org.apache.catalina.realm.MessageDigestCredentialHandler"
+                           algorithm="SHA-1" />
+    </Realm -->
 </Context>
