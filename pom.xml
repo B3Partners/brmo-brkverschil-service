@@ -74,7 +74,7 @@
         <test.skipITs>true</test.skipITs>
         <junit.jupiter.version>5.3.1</junit.jupiter.version>
         <brmo.version>1.6.0</brmo.version>
-        <tomcat.version>7.0.90</tomcat.version>
+        <tomcat.version>7.0.91</tomcat.version>
         <postgresql.jdbc.version>42.2.5</postgresql.jdbc.version>
         <maven.surefire.version>2.22.0</maven.surefire.version>
         <jacoco-maven-plugin.version>0.8.2</jacoco-maven-plugin.version>
@@ -273,11 +273,11 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>2.5.2</version>
+                    <version>3.0.0-M1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>2.8.2</version>
+                    <version>3.0.0-M1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-enforcer-plugin</artifactId>
@@ -418,7 +418,7 @@
                 <plugin>
                     <groupId>org.owasp</groupId>
                     <artifactId>dependency-check-maven</artifactId>
-                    <version>3.3.1</version>
+                    <version>3.3.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>
@@ -488,7 +488,7 @@
                         <configuration>
                             <rules>
                                 <requireMavenVersion>
-                                    <version>[3.2.5,)</version>
+                                    <version>[3.3.9,)</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
                                     <version>${java.version}</version>
@@ -858,6 +858,11 @@
                             <description>Description of your release</description>
                             <releaseName>v${project.version}</releaseName>
                             <tag>@{project.artifactId}-@{project.version}</tag>
+                            <!-- check
+                            https://github.com/jutzig/github-release-plugin/issues/8
+                            https://github.com/jutzig/github-release-plugin
+                            https://github.com/B3Partners/brmo-brkverschil-service/settings
+                            -->
                             <fileSets>
                                 <fileSet>
                                     <directory>${project.build.directory}</directory>
