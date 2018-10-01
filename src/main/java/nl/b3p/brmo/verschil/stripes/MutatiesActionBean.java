@@ -374,6 +374,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("arch.perceelnummer, ")
                 .append("arch.deelperceelnummer, ")
                 .append("arch.appartementsindex ")
+                // 0-padding
                 .append("FROM ")
                 .append(VIEW_KAD_ONRRND_ZK_ARCHIEF)
                 .append(" arch ")
@@ -402,11 +403,17 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     private long getGewijzigdeOpp(File workDir) {
         StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (za.kad_identif) ")
                 .append("za.kad_identif, ")
+                // TODO data uit RSGB heeft geen 0-padding
+                .append("k.ka_kad_gemeentecode AS gemeentecode, ")
+                .append("k.ka_sectie AS sectie, ")
+                .append("k.ka_perceelnummer AS perceelnummer, ")
+                .append("k.ka_deelperceelnummer AS deelperceelnummer, ")
+                // 0-padding
                 .append("za.dat_beg_geldh, ")
                 .append("pa.grootte_perceel AS opp_oud, ")
                 .append("k.grootte_perceel  AS opp_actueel ")
                 .append("FROM kad_onrrnd_zk_archief za, kad_perceel_archief pa, kad_perceel k ")
-                // perceelmoet in de archief zitten in gevraagde periode
+                // perceel moet in de archief zitten in gevraagde periode
                 .append("WHERE '[")
                 .append(df.format(van)).append(",").append(df.format(tot))
                 .append("]'::DATERANGE @> za.dat_beg_geldh::DATE ")
