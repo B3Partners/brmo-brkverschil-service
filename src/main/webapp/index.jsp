@@ -32,6 +32,7 @@
         <ul>
             <li><code>curl --user mutaties:mutaties "${contextService}${contextPath}/rest/mutaties?van=2018-08-01" --verbose --output test.zip</code></li>
             <li><code>wget --http-user=mutaties --http-password=mutaties "${contextService}${contextPath}/rest/mutaties?van=2018-08-01" -O test.zip</code></li>
+            <li><code>wget --http-user=mutaties --http-password=mutaties "${contextService}${contextPath}/rest/mutaties?van=2018-08-01" -O test.zip;unzip -oq test.zip</code> Om bestanden meteen met 7-zip uit te pakken</li>
         </ul>
     </stripes:layout-component>
 </stripes:layout-render>

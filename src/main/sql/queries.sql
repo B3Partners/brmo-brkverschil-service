@@ -2,20 +2,20 @@
 SELECT DISTINCT
     o.kad_identif,
     o.dat_beg_geldh,
-    b.ka_kad_gemeentecode,
-    b.ka_perceelnummer,
-    b.ka_deelperceelnummer,
-    b.ka_sectie,
-    b.ka_appartementsindex,
-    b.kpr_nummer,
+    tax.gemeentecode,
+    tax.perceelnummer,
+    tax.deelperceelnummer,
+    tax.sectie,
+    tax.appartementsindex,
+    tax.kpr_nummer,
     q.grootte_perceel,
     q.x,
     q.y,
-    z.ar_teller,
-    z.ar_noemer,
-    z.fk_3avr_aand,
-    avr.omschr_aard_verkregenr_recht,
-    h.fk_sc_rh_koz_kad_identif AS ontstaan_uit
+    z.ar_teller                      AS aandeel_teller,
+    z.ar_noemer                      AS aandeel_noemer,
+    z.fk_3avr_aand                   AS rechtcode,
+    avr.omschr_aard_verkregenr_recht AS rechtomschrijving,
+    h.fk_sc_rh_koz_kad_identif       AS ontstaan_uit
 FROM
     kad_onrrnd_zk o
 LEFT JOIN
@@ -60,15 +60,15 @@ LEFT JOIN
 ON
     o.kad_identif = h.fk_sc_lh_koz_kad_identif
 JOIN
-    tax.belastingplichtige b
+    tax.belastingplichtige tax
 ON
     (
-        q.ka_kad_gemeentecode = trim(LEADING '0' FROM b.ka_kad_gemeentecode)
-    AND q.ka_sectie = b.ka_sectie
-    AND q.ka_perceelnummer = trim(LEADING '0' FROM b.ka_perceelnummer)
-    AND COALESCE(q.ka_appartementsindex, '') = COALESCE(trim(LEADING '0' FROM b.ka_appartementsindex), ''))
+        q.ka_kad_gemeentecode = trim(LEADING '0' FROM tax.gemeentecode)
+    AND q.ka_sectie = tax.sectie
+    AND q.ka_perceelnummer = trim(LEADING '0' FROM tax.perceelnummer)
+    AND COALESCE(q.ka_appartementsindex, '') = COALESCE(trim(LEADING '0' FROM tax.appartementsindex), ''))
 WHERE
-    '[2018-08-01,2018-09-11]'::DATERANGE @ > o.dat_beg_geldh::DATE
+    '[2017-08-01,2018-10-02]'::DATERANGE @> o.dat_beg_geldh::DATE
 AND o.kad_identif NOT IN
     (
         SELECT
@@ -76,8 +76,8 @@ AND o.kad_identif NOT IN
         FROM
             kad_onrrnd_zk_archief
         WHERE
-            '2018-08-01'::DATE < dat_beg_geldh::DATE)
-AND z.fk_8pes_sc_identif IS NOT NULL
+            '2017-08-01'::DATE < dat_beg_geldh::DATE)
+AND z.fk_8pes_sc_identif IS NOT NULL;
 
 -- Ophalen nieuwe onroerende zaken
 SELECT DISTINCT
@@ -97,7 +97,7 @@ SELECT DISTINCT
 FROM
     vb_kad_onrrnd_zk_adres adr
 WHERE
-    '[2018-08-01,2018-09-11]'::DATERANGE @ > adr.begin_geldigheid::DATE
+    '[2017-08-01,2018-10-02]'::DATERANGE @> adr.begin_geldigheid::DATE
 AND adr.koz_identif NOT IN
     (
         SELECT
@@ -105,7 +105,7 @@ AND adr.koz_identif NOT IN
         FROM
             kad_onrrnd_zk_archief
         WHERE
-            '2018-08-01'::DATE < dat_beg_geldh::DATE)
+            '2017-08-01'::DATE < dat_beg_geldh::DATE);
 
 -- Ophalen vervallen objecten
 SELECT DISTINCT
@@ -121,7 +121,7 @@ ON
 FROM
     vb_kad_onrrnd_zk_archief arch
 WHERE
-    '[2018-08-01,2018-09-11]'::DATERANGE @ > arch.eind_geldigheid::DATE
+    '[2017-08-01,2018-10-02]'::DATERANGE @> arch.eind_geldigheid::DATE
 AND arch.koz_identif NOT IN
     (
         SELECT
@@ -130,22 +130,22 @@ AND arch.koz_identif NOT IN
             kad_onrrnd_zk)
 ORDER BY
     arch.koz_identif,
-    arch.eind_geldigheid::DATE DESC
+    arch.eind_geldigheid::DATE DESC;
 
 -- Ophalen object verkopen
 SELECT DISTINCT
     bron.ref_id,
     bron.datum::text AS verkoopdatum,
-    b.ka_kad_gemeentecode,
-    b.ka_sectie,
-    b.ka_perceelnummer,
-    b.ka_deelperceelnummer,
-    b.ka_appartementsindex,
-    b.kpr_nummer,
-    z.ar_teller,
-    z.ar_noemer,
-    z.fk_3avr_aand,
-    avr.omschr_aard_verkregenr_recht
+    tax.gemeentecode,
+    tax.sectie,
+    tax.perceelnummer,
+    tax.deelperceelnummer,
+    tax.appartementsindex,
+    tax.kpr_nummer,
+    z.ar_teller                      AS aandeel_teller,
+    z.ar_noemer                      AS aandeel_noemer,
+    z.fk_3avr_aand                   AS rechtcode,
+    avr.omschr_aard_verkregenr_recht AS rechtomschrijving
 FROM
     (
         SELECT
@@ -189,22 +189,26 @@ LEFT JOIN
 ON
     z.fk_3avr_aand = avr.aand
 JOIN
-    tax.belastingplichtige b
+    tax.belastingplichtige tax
 ON
     (
-        q.ka_kad_gemeentecode = trim(LEADING '0' FROM b.ka_kad_gemeentecode)
-    AND q.ka_sectie = b.ka_sectie
-    AND q.ka_perceelnummer = trim(LEADING '0' FROM b.ka_perceelnummer)
-    AND COALESCE(q.ka_appartementsindex, '') = COALESCE(trim(LEADING '0' FROM b.ka_appartementsindex), ''))
+        q.ka_kad_gemeentecode = trim(LEADING '0' FROM tax.gemeentecode)
+    AND q.ka_sectie = tax.sectie
+    AND q.ka_perceelnummer = trim(LEADING '0' FROM tax.perceelnummer)
+    AND COALESCE(q.ka_appartementsindex, '') = COALESCE(trim(LEADING '0' FROM tax.appartementsindex), ''))
 WHERE
-    '[2018-08-01,2018-09-11]'::DATERANGE @ > bron.datum
-AND z.fk_8pes_sc_identif IS NOT NULL
+    '[2017-08-01,2018-10-02]'::DATERANGE @> bron.datum
+AND z.fk_8pes_sc_identif IS NOT NULL;
 
 -- Ophalen oppervlakte veranderd objecten
 SELECT DISTINCT
 ON
     (
         za.kad_identif) za.kad_identif,
+    k.ka_kad_gemeentecode  AS gemeentecode,
+    k.ka_sectie            AS sectie,
+    k.ka_perceelnummer     AS perceelnummer,
+    k.ka_deelperceelnummer AS deelperceelnummer,
     za.dat_beg_geldh,
     pa.grootte_perceel AS opp_oud,
     k.grootte_perceel  AS opp_actueel
@@ -213,7 +217,7 @@ FROM
     kad_perceel_archief pa,
     kad_perceel k
 WHERE
-    '[2018-08-01,2018-09-11]'::DATERANGE @ > za.dat_beg_geldh::DATE
+    '[2017-08-01,2018-10-02]'::DATERANGE @> za.dat_beg_geldh::DATE
 AND za.dat_beg_geldh = pa.sc_dat_beg_geldh
 AND za.kad_identif = pa.sc_kad_identif
 AND za.kad_identif = k.sc_kad_identif
@@ -225,10 +229,10 @@ AND za.kad_identif IN
         FROM
             kad_onrrnd_zk
         WHERE
-            '[2018-08-01,2018-09-11]'::DATERANGE @ > dat_beg_geldh::DATE)
+            '[2017-08-01,2018-10-02]'::DATERANGE @> dat_beg_geldh::DATE)
 ORDER BY
     za.kad_identif,
-    za.dat_beg_geldh DESC
+    za.dat_beg_geldh DESC;
 
 -- Ophalen nieuwe subjecten
 SELECT DISTINCT
@@ -255,15 +259,15 @@ ON
 FROM
     vb_koz_rechth q
 LEFT JOIN
-    tax.belastingplichtige b
+    tax.belastingplichtige tax
 ON
     (
-        q.gemeentecode = trim(LEADING '0' FROM b.ka_kad_gemeentecode)
-    AND q.sectie = b.ka_sectie
-    AND q.perceelnummer = trim(LEADING '0' FROM b.ka_perceelnummer)
-    AND COALESCE(q.appartementsindex, '') = COALESCE(trim(LEADING '0' FROM b.ka_appartementsindex), ''))
+        q.gemeentecode = trim(LEADING '0' FROM tax.gemeentecode)
+    AND q.sectie = tax.sectie
+    AND q.perceelnummer = trim(LEADING '0' FROM tax.perceelnummer)
+    AND COALESCE(q.appartementsindex, '') = COALESCE(trim(LEADING '0' FROM tax.appartementsindex), ''))
 WHERE
-    '[2018-08-01,2018-09-11]'::DATERANGE @ > q.begin_geldigheid::DATE
+    '[2017-08-01,2018-10-02]'::DATERANGE @> q.begin_geldigheid::DATE
 AND q.koz_identif NOT IN
     (
         SELECT
@@ -271,11 +275,11 @@ AND q.koz_identif NOT IN
         FROM
             kad_onrrnd_zk_archief
         WHERE
-            '2018-08-01'::DATE < dat_beg_geldh::DATE)
-AND b.kpr_nummer IS NULL
+            '2017-08-01'::DATE < dat_beg_geldh::DATE)
+AND tax.kpr_nummer IS NULL
 ORDER BY
     q.naam,
-    q.begin_geldigheid ASC
+    q.begin_geldigheid ASC;
 
 -- Ophalen BSN aangepast
 SELECT
@@ -295,4 +299,4 @@ WHERE
         FROM
             ander_nat_prs)
 AND hm.tabel = 'subject'
-AND '[2018-08-01,2018-09-11]'::DATERANGE @ > datum::DATE
+AND '[2017-08-01,2018-10-02]'::DATERANGE @> datum::DATE;

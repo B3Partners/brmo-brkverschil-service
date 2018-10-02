@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>nl.b3p</groupId>
     <artifactId>brmo-brkverschil-service</artifactId>
@@ -568,7 +569,7 @@
                     <includes>
                         <include>**/*IntegrationTest.java</include>
                     </includes>
-                    <systemPropertyVariables />
+                    <systemPropertyVariables/>
                     <trimStackTrace>false</trimStackTrace>
                     <useFile>false</useFile>
                     <skipTests>${test.skipITs}</skipTests>
@@ -664,18 +665,18 @@
                     <dependencyDetailsEnabled>true</dependencyDetailsEnabled>
                 </configuration>
             </plugin>
-            <!--<plugin>-->
-                <!--<artifactId>maven-javadoc-plugin</artifactId>-->
-                <!--<version>${maven-javadoc-plugin.version}</version>-->
-                <!--<reportSets>-->
-                    <!--<reportSet>-->
-                        <!--<reports>-->
-                            <!--<report>javadoc-no-fork</report>-->
-                            <!--<report>test-javadoc-no-fork</report>-->
-                        <!--</reports>-->
-                    <!--</reportSet>-->
-                <!--</reportSets>-->
-            <!--</plugin>-->
+            <plugin>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${maven-javadoc-plugin.version}</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>javadoc-no-fork</report>
+                            <report>test-javadoc-no-fork</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>taglist-maven-plugin</artifactId>
@@ -697,23 +698,23 @@
                     <goal>failsafe-report-only</goal>
                 </configuration>
             </plugin>
-            <!--<plugin>-->
-                <!--<groupId>org.jacoco</groupId>-->
-                <!--<artifactId>jacoco-maven-plugin</artifactId>-->
-                <!--<version>${jacoco-maven-plugin.version}</version>-->
-                <!--<reportSets>-->
-                    <!--<reportSet>-->
-                        <!--<reports>-->
-                            <!--<report>report</report>-->
-                            <!--<report>report-integration</report>-->
-                            <!--<report>report-aggregate</report>-->
-                        <!--</reports>-->
-                    <!--</reportSet>-->
-                <!--</reportSets>-->
-                <!--<configuration>-->
-                    <!--<excludes>**/*Test.class</excludes>-->
-                <!--</configuration>-->
-            <!--</plugin>-->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco-maven-plugin.version}</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>report</report>
+                            <report>report-integration</report>
+                            <report>report-aggregate</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+                <configuration>
+                    <excludes>**/*Test.class</excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </reporting>
     <profiles>
@@ -779,7 +780,7 @@
                                     <skip>${test.skipITs}</skip>
                                     <jarScanAllDirectories>false</jarScanAllDirectories>
                                     <uriEncoding>UTF-8</uriEncoding>
-                                    <systemProperties />
+                                    <systemProperties/>
                                 </configuration>
                             </execution>
                             <execution>
@@ -850,29 +851,55 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- TODO auto upload van zipfile naar GH release -->
+                    <!-- TODO auto upload van zipfile naar GH release
+                    https://github.com/jutzig/github-release-plugin -->
                     <plugin>
                         <groupId>de.jutzig</groupId>
                         <artifactId>github-release-plugin</artifactId>
-                        <configuration>
-                            <description>Description of your release</description>
-                            <releaseName>v${project.version}</releaseName>
-                            <tag>@{project.artifactId}-@{project.version}</tag>
-                            <!-- check
-                            https://github.com/jutzig/github-release-plugin/issues/8
-                            https://github.com/jutzig/github-release-plugin
-                            https://github.com/B3Partners/brmo-brkverschil-service/settings
-                            -->
-                            <fileSets>
-                                <fileSet>
-                                    <directory>${project.build.directory}</directory>
-                                    <includes>
-                                        <include>${project.build.finalName}-${project.version}-bin.zip</include>
-                                    </includes>
-                                </fileSet>
-                            </fileSets>
-                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>github-upload</id>
+                                <phase>deploy</phase>
+                                <goals>
+                                    <goal>release</goal>
+                                </goals>
+                                <inherited>false</inherited>
+                                <configuration>
+                                    <description>release v${project.version}</description>
+                                    <releaseName>v${project.version}</releaseName>
+                                    <tag>${project.artifactId}-${project.version}</tag>
+                                    <artifact>${project.build.directory}/${project.build.finalName}-${project.version}-bin.zip</artifact>
+                                    <overwriteArtifact>true</overwriteArtifact>
+                                    <fileSets>
+                                        <fileSet>
+                                            <directory>${project.build.directory}</directory>
+                                            <includes>
+                                                <include>${project.build.finalName}-${project.version}-bin.zip</include>
+                                            </includes>
+                                        </fileSet>
+                                    </fileSets>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
+                    <!-- https://github.com/cy6erGn0m/github-release-plugin -->
+                    <!--<plugin>-->
+                        <!--<groupId>cy.github</groupId>-->
+                        <!--<artifactId>github-release-plugin</artifactId>-->
+                        <!--<version>${plugin.version}</version>-->
+                        <!--<configuration>-->
+                            <!--<tagName>${project.artifactId}-${project.version}</tagName>-->
+                            <!--<preRelease>true</preRelease>-->
+                        <!--</configuration>-->
+                        <!--<executions>-->
+                            <!--<execution>-->
+                                <!--<goals>-->
+                                    <!--<goal>gh-upload</goal>-->
+                                <!--</goals>-->
+                                <!--<phase>deploy</phase>-->
+                            <!--</execution>-->
+                        <!--</executions>-->
+                    <!--</plugin>-->
                 </plugins>
             </build>
         </profile>

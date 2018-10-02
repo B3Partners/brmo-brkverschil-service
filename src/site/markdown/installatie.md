@@ -8,11 +8,12 @@ In de **rsgb** database dient een schema `tax`  met daarin een tabel `belastingp
 het script `create_belastingplichtige.sql`, na het aanmaken van deze tabel kan deze worden gevuld vanuit een CSV bestand of via ETL.
 
 ```sql
+-- pas het onderstaande pad aan naar het bestand met de CSV dump uit gibs in het formaat
+-- AAL01;A ;00001;G;0000;000003615455240
 TRUNCATE TABLE tax.belastingplichtige;
-COPY tax.belastingplichtige(ka_kad_gemeentecode,ka_sectie,ka_perceelnummer,ka_deelperceelnummer,ka_appartementsindex,kpr_nummer)
-FROM '../brmo-brkverschil-service/data/b3eigwb.csv' DELIMITER ';' CSV;
+COPY tax.belastingplichtige(gemeentecode, sectie, perceelnummer, deelperceelnummer, appartementsindex, kpr_nummer)
+FROM '/home/mark/dev/projects/brmo-brkverschil-service/data/b3eigwb.csv' DELIMITER ';' CSV;
 ```
-
 
 ## Webapplicatie
 
@@ -23,3 +24,13 @@ Aanmelden met (default) `mutaties` / `mutaties`
 
 De REST services zijn met BASIC authenticatie beveiligd, de webapplicatie zelf
 is met FORM based authenticatie beveiligd.
+
+### configuratie parameters
+
+De webapplicatie kan met een aantal context parameters worden getuned, in onderstaande tabel een overzicht.
+
+| parameter  | default | omschrijving |
+| ---------- | --------|--------------|
+|use_mv      |false    |`true` om materialized views te gebruiken in de queries, `false` om reguliere views te gebruiken |
+|jdbc_fetch_size|1000  | aantal records om in 1 keer op te halen uit de database |
+

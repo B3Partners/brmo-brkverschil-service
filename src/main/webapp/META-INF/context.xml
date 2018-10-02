@@ -2,13 +2,13 @@
 <Context antiJARLocking="true" path="/brmo-brkverschil-service">
     <ResourceLink global="jdbc/brmo/rsgb" name="jdbc/brmo/rsgb" type="javax.sql.DataSource"/>
     <ResourceLink global="jdbc/brmo/staging" name="jdbc/brmo/staging" type="javax.sql.DataSource"/>
-    <Realm allRolesMode="authOnly" className="org.apache.catalina.realm.DataSourceRealm"
-           dataSourceName="jdbc/brmo/staging" digest="SHA-1" roleNameCol="groep_" userCredCol="wachtwoord"
-           userNameCol="gebruikersnaam" userRoleTable="gebruiker_groepen" userTable="gebruiker_">
-        <CredentialHandler algorithm="SHA-1" className="org.apache.catalina.realm.MessageDigestCredentialHandler"/>
+    <Realm className="org.apache.catalina.realm.DataSourceRealm" allRolesMode="authOnly" dataSourceName="jdbc/brmo/staging"
+           roleNameCol="groep_" userCredCol="wachtwoord" userNameCol="gebruikersnaam" userRoleTable="gebruiker_groepen" userTable="gebruiker_"
+           digest="SHA-1">
+        <CredentialHandler className="org.apache.catalina.realm.MessageDigestCredentialHandler" algorithm="SHA-1"/>
     </Realm>
     <!-- true om materialized views te gebruiken in de queries -->
-    <Parameter name="use_mv" value="true"/>
+    <Parameter name="use_mv" value="false"/>
     <!-- database recordset fetch size -->
     <Parameter name="jdbc_fetch_size" value="1000"/>
 </Context>

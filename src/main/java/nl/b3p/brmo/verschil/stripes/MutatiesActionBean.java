@@ -78,24 +78,25 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     private boolean errorCondition = false;
 
     // als gekoppeld wordt met een table
-    private static final String BP_JOIN_CLAUSE = new StringBuilder()
-            .append("tax.belastingplichtige b ON ( ")
-            .append("      q.ka_kad_gemeentecode=trim(LEADING '0' from b.ka_kad_gemeentecode) ")
-            .append("  AND q.ka_sectie=b.ka_sectie ")
-            .append("  AND q.ka_perceelnummer=trim(LEADING '0' from b.ka_perceelnummer) ")
+    private static final String TAX_JOIN_CLAUSE_TBL = new StringBuilder()
+            .append("tax.belastingplichtige tax ON ( ")
+            .append("      q.ka_kad_gemeentecode=trim(LEADING '0' from tax.gemeentecode) ")
+            .append("  AND q.ka_sectie=tax.sectie ")
+            .append("  AND q.ka_perceelnummer=trim(LEADING '0' from tax.perceelnummer) ")
             // deelperceel nummer wordt niet gevuld vanuit BRK want dat bestaat niet meer, dus ook niet in rsgb
-            //.append("  AND coalesce(q.ka_deelperceelnummer,'')=coalesce(trim(LEADING '0' from b.ka_deelperceelnummer),'') ")
-            .append("  AND coalesce(q.ka_appartementsindex,'')=coalesce(trim(LEADING '0' from b.ka_appartementsindex),'') )").toString();
+            //.append("  AND coalesce(q.ka_deelperceelnummer,'')=coalesce(trim(LEADING '0' from tax.deelperceelnummer),'') ")
+            .append("  AND coalesce(q.ka_appartementsindex,'')=coalesce(trim(LEADING '0' from tax.appartementsindex),'') )").toString();
 
     // als gekoppeld wordt met een view
-    private static final String BP_JOIN_CLAUSE_V = new StringBuilder()
-            .append("tax.belastingplichtige b ON ( ")
-            .append("      q.gemeentecode=trim(LEADING '0' from b.ka_kad_gemeentecode) ")
-            .append("  AND q.sectie=b.ka_sectie ")
-            .append("  AND q.perceelnummer=trim(LEADING '0' from b.ka_perceelnummer) ")
+    private static final String TAX_JOIN_CLAUSE_VW = new StringBuilder()
+            .append("tax.belastingplichtige tax ON ( ")
+            .append("      q.gemeentecode=trim(LEADING '0' from tax.gemeentecode) ")
+            .append("  AND q.sectie=tax.sectie ")
+            .append("  AND q.perceelnummer=trim(LEADING '0' from tax.perceelnummer) ")
             // deelperceel nummer wordt niet gevuld vanuit BRK want dat bestaat niet meer, dus ook niet in rsgb
-            //.append("  AND coalesce(q.deelperceelnummer,'')=coalesce(trim(LEADING '0' from b.ka_deelperceelnummer),'') ")
-            .append("  AND coalesce(q.appartementsindex,'')=coalesce(trim(LEADING '0' from b.ka_appartementsindex),'') )").toString();
+            //.append("  AND coalesce(q.deelperceelnummer,'')=coalesce(trim(LEADING '0' from tax.deelperceelnummer),'') ")
+            //.append("  AND coalesce(q.deelperceelnummer,'')=coalesce(trim(LEADING '0' from tax.deelperceelnummer),'') ")
+            .append("  AND coalesce(q.appartementsindex,'')=coalesce(trim(LEADING '0' from tax.appartementsindex),'') )").toString();
 
     /**
      * context param voor view vb_koz_rechth.
@@ -250,46 +251,51 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
                 .append("o.kad_identif, ")
                 .append("o.dat_beg_geldh, ")
-                //
-                .append("b.ka_kad_gemeentecode, ")
-                .append("b.ka_perceelnummer, ")
-                .append("b.ka_deelperceelnummer, ")
-                .append("b.ka_sectie, ")
-                .append("b.ka_appartementsindex, ")
-                .append("b.kpr_nummer, ")
-                //
+                .append("tax.gemeentecode, ")
+                .append("tax.perceelnummer, ")
+                .append("tax.deelperceelnummer, ")
+                .append("tax.sectie, ")
+                .append("tax.appartementsindex, ")
+                .append("tax.kpr_nummer, ")
                 .append("q.grootte_perceel, ")
                 .append("q.x, ")
                 .append("q.y, ")
-                .append("z.ar_teller, ")
-                .append("z.ar_noemer, ")
-                .append("z.fk_3avr_aand, ")
-                .append("avr.omschr_aard_verkregenr_recht, ")
+                .append("z.ar_teller AS aandeel_teller, ")
+                .append("z.ar_noemer AS aandeel_noemer, ")
+                .append("z.fk_3avr_aand AS rechtcode, ")
+                .append("avr.omschr_aard_verkregenr_recht AS rechtomschrijving, ")
                 .append("h.fk_sc_rh_koz_kad_identif AS ontstaan_uit ")
+                // TODO evt opzoeken kadastrale aanduiding in perceel/app_re archief
+                // .append("arch.ka_kad_gemeentecode AS ontstaan_uit_gemeentecode, ")
+                // .append("arch.ka_perceelnummer AS ontstaan_uit_perceelnummer, ")
+                // .append("arch.ka_deelperceelnummer AS ontstaan_uit_deelperceelnummer, ")
+                // .append("arch.ka_sectie AS ontstaan_uit_sectie, ")
+                // .append("arch.ka_appartementsindex AS ontstaan_uit_appartementsindex, ")
+                // of misschien samengesteld?
                 // .append("h.fk_sc_lh_koz_kad_identif AS overgegaan_in ")
-                .append("from kad_onrrnd_zk o ")
+                .append("FROM kad_onrrnd_zk o ")
                 // samengestelde app_re en kad_perceel als q
                 .append("LEFT JOIN (SELECT  ")
-                .append("ar.sc_kad_identif, ")
-                .append("ar.ka_kad_gemeentecode, ")
-                .append("ar.ka_perceelnummer, ")
-                .append("null AS ka_deelperceelnummer, ")
-                .append("ar.ka_sectie, ")
-                .append("ar.ka_appartementsindex, ")
-                .append("null AS grootte_perceel, ")
-                .append("null AS x, ")
-                .append("null AS y ")
+                .append("  ar.sc_kad_identif, ")
+                .append("  ar.ka_kad_gemeentecode, ")
+                .append("  ar.ka_perceelnummer, ")
+                .append("  null AS ka_deelperceelnummer, ")
+                .append("  ar.ka_sectie, ")
+                .append("  ar.ka_appartementsindex, ")
+                .append("  null AS grootte_perceel, ")
+                .append("  null AS x, ")
+                .append("  null AS y ")
                 .append("FROM app_re ar ")
                 .append("UNION ALL SELECT ")
-                .append("p.sc_kad_identif, ")
-                .append("p.ka_kad_gemeentecode, ")
-                .append("p.ka_perceelnummer, ")
-                .append("p.ka_deelperceelnummer, ")
-                .append("p.ka_sectie, ")
-                .append("null AS ka_appartementsindex, ")
-                .append("p.grootte_perceel, ")
-                .append("ST_X(p.plaatscoordinaten_perceel) AS x, ")
-                .append("ST_Y(p.plaatscoordinaten_perceel) AS y ")
+                .append("  p.sc_kad_identif, ")
+                .append("  p.ka_kad_gemeentecode, ")
+                .append("  p.ka_perceelnummer, ")
+                .append("  p.ka_deelperceelnummer, ")
+                .append("  p.ka_sectie, ")
+                .append("  null AS ka_appartementsindex, ")
+                .append("  p.grootte_perceel, ")
+                .append("  ST_X(p.plaatscoordinaten_perceel) AS x, ")
+                .append("  ST_Y(p.plaatscoordinaten_perceel) AS y ")
                 .append("FROM kad_perceel p) q ")
                 // einde samenstelling app_re en kad_perceel als q
                 .append("ON o.kad_identif=q.sc_kad_identif ")
@@ -301,7 +307,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("LEFT JOIN kad_onrrnd_zk_his_rel h ON o.kad_identif=h.fk_sc_lh_koz_kad_identif ")
                 // BKP erbij
                 .append("JOIN ")
-                .append(BP_JOIN_CLAUSE)
+                .append(TAX_JOIN_CLAUSE_TBL)
                 // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief,
                 // maar niet in de archief tabel met een datum voor "van".
                 .append("WHERE '[")
@@ -446,47 +452,46 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      * @return aantal verkopen
      */
     private long getVerkopen(File workDir) {
-        StringBuilder sql = new StringBuilder("SELECT ")
-                .append("DISTINCT bron.ref_id, ")
+        StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
+                .append("bron.ref_id, ")
                 .append("bron.datum::text as verkoopdatum, ")
-                //
-                .append("b.ka_kad_gemeentecode, ")
-                .append("b.ka_sectie, ")
-                .append("b.ka_perceelnummer, ")
-                .append("b.ka_deelperceelnummer, ")
-                .append("b.ka_appartementsindex, ")
-                .append("b.kpr_nummer, ")
-                //
-                .append("z.ar_teller, ")
-                .append("z.ar_noemer, ")
-                .append("z.fk_3avr_aand, ")
-                .append("avr.omschr_aard_verkregenr_recht ")
+                .append("tax.gemeentecode, ")
+                .append("tax.sectie, ")
+                .append("tax.perceelnummer, ")
+                .append("tax.deelperceelnummer, ")
+                .append("tax.appartementsindex, ")
+                .append("tax.kpr_nummer, ")
+                .append("z.ar_teller AS aandeel_teller, ")
+                .append("z.ar_noemer AS aandeel_noemer, ")
+                .append("z.fk_3avr_aand AS rechtcode, ")
+                .append("avr.omschr_aard_verkregenr_recht AS rechtomschrijving ")
                 // verkoop + datum
                 .append("FROM ( ")
                 .append("  SELECT brondocument.ref_id, max(brondocument.datum) AS datum FROM brondocument WHERE brondocument.omschrijving = 'Akte van Koop en Verkoop' GROUP BY brondocument.ref_id) bron ")
                 // samengestelde app_re en kad_perceel als q
                 .append("LEFT JOIN (SELECT  ")
-                .append("ar.sc_kad_identif, ")
-                .append("ar.ka_kad_gemeentecode, ")
-                .append("ar.ka_perceelnummer, ")
-                .append("null AS ka_deelperceelnummer, ")
-                .append("ar.ka_sectie, ")
-                .append("ar.ka_appartementsindex ")
+                .append("  ar.sc_kad_identif, ")
+                .append("  ar.ka_kad_gemeentecode, ")
+                .append("  ar.ka_perceelnummer, ")
+                .append("  null AS ka_deelperceelnummer, ")
+                .append("  ar.ka_sectie, ")
+                .append("  ar.ka_appartementsindex ")
                 .append("FROM app_re ar ")
                 .append("UNION ALL SELECT ")
-                .append("p.sc_kad_identif, ")
-                .append("p.ka_kad_gemeentecode, ")
-                .append("p.ka_perceelnummer, ")
-                .append("p.ka_deelperceelnummer, ")
-                .append("p.ka_sectie, ")
-                .append("null AS ka_appartementsindex ")
+                .append("  p.sc_kad_identif, ")
+                .append("  p.ka_kad_gemeentecode, ")
+                .append("  p.ka_perceelnummer, ")
+                .append("  p.ka_deelperceelnummer, ")
+                .append("  p.ka_sectie, ")
+                .append("  null AS ka_appartementsindex ")
                 .append("FROM kad_perceel p) q ")
                 // einde samenstelling app_re en kad_perceel als q
                 .append("ON bron.ref_id=q.sc_kad_identif::text ")
-                .append("LEFT JOIN zak_recht z ON bron.ref_id=z.fk_7koz_kad_identif::text ")
-                .append("LEFT JOIN aard_verkregen_recht avr ON z.fk_3avr_aand=avr.aand ")
+                .append("LEFT JOIN zak_recht z ON bron.ref_id = z.fk_7koz_kad_identif::text ")
+                .append("LEFT JOIN aard_verkregen_recht avr ON z.fk_3avr_aand = avr.aand ")
                 .append("JOIN ")
-                .append(BP_JOIN_CLAUSE)
+                // levert b
+                .append(TAX_JOIN_CLAUSE_TBL)
                 .append("WHERE '[")
                 .append(df.format(van)).append(",").append(df.format(tot))
                 .append("]'::DATERANGE @> bron.datum ")
@@ -529,10 +534,10 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("q.huisnummer_toev, ")
                 .append("q.postcode, ")
                 .append("q.woonplaats ")
-                // altijd null: b.kpr_nummer
+                // altijd null: tax.kpr_nummer
                 .append("FROM ").append(VIEW_KOZ_RECHTHEBBENDE).append(" q ")
                 .append("LEFT JOIN ")
-                .append(BP_JOIN_CLAUSE_V)
+                .append(TAX_JOIN_CLAUSE_VW)
                 // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief,
                 // maar niet in de archief tabel met een datum voor "van".
                 .append("WHERE '[")
@@ -541,7 +546,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("AND q.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
                 .append(df.format(van)).append("'::date < dat_beg_geldh::date) ")
                 // die niet gekoppeld kunnen worden
-                .append("AND b.kpr_nummer IS NULL ")
+                .append("AND tax.kpr_nummer IS NULL ")
                 // alleen de eerste naam met de oudste datum
                 .append("ORDER BY q.naam, q.begin_geldigheid ASC");
 
