@@ -353,7 +353,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append(df.format(van)).append(",").append(df.format(tot)).append("]'::DATERANGE @> adr.begin_geldigheid::date ")
                 .append("AND adr.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
                 .append(df.format(van))
-                .append("'::date < dat_beg_geldh::date) ");
+                .append("'::date < dat_beg_geldh::date) ORDER BY adr.koz_identif");
         switch (f) {
             case "csv":
                 return queryToCSV(workDir, "GekoppeldeObjecten.csv", sql.toString());
