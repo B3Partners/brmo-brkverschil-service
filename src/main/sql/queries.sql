@@ -198,7 +198,8 @@ ON
     AND COALESCE(q.ka_appartementsindex, '') = COALESCE(trim(LEADING '0' FROM tax.appartementsindex), ''))
 WHERE
     '[2017-08-01,2018-10-02]'::DATERANGE @> bron.datum
-AND z.fk_8pes_sc_identif IS NOT NULL;
+AND z.fk_8pes_sc_identif IS NOT NULL
+AND tax.kpr_nummer IS null;
 
 -- Ophalen oppervlakte veranderd objecten
 SELECT DISTINCT
