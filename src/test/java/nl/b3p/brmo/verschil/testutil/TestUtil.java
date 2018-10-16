@@ -58,7 +58,7 @@ public abstract class TestUtil {
     /**
      * the server root url. {@value}
      */
-    public static final String BASE_TEST_URL = "http://localhost:9090/brmo-brkverschil-service/";
+    public static final String BASE_TEST_URL = "http://localhost:9091/brmo-brkverschil-service/";
 
     /**
      * set up van custom http client voor de integratie tests.
@@ -67,7 +67,7 @@ public abstract class TestUtil {
     public static void setUpHttpClient() {
         CredentialsProvider credsProvider = new BasicCredentialsProvider();
         credsProvider.setCredentials(
-                new AuthScope("localhost", 9090),
+                new AuthScope("localhost", 9091),
                 new UsernamePasswordCredentials("mutaties", "mutaties")
         );
 
