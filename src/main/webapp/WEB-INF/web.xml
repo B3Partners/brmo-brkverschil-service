@@ -78,6 +78,11 @@
         <servlet-class>net.sourceforge.stripes.controller.DispatcherServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
+    <servlet>
+        <servlet-name>DiagnosticsServlet</servlet-name>
+        <servlet-class>nl.b3p.brmo.verschil.util.DiagnosticsServlet</servlet-class>
+        <load-on-startup>2</load-on-startup>
+    </servlet>
     <!--    <servlet-mapping>
          <servlet-name>StripesDispatcher</servlet-name>
          <url-pattern>*.action</url-pattern>
