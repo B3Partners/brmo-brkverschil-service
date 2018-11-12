@@ -14,7 +14,6 @@ import java.util.Locale;
 import java.util.Properties;
 
 /**
- *
  * @author mprins
  */
 public class DiagnosticsServlet implements Servlet {
@@ -45,16 +44,18 @@ public class DiagnosticsServlet implements Servlet {
         }
 
         final Properties props = new Properties();
-        String appVersie = "onbekend";
+
         try {
             props.load(DiagnosticsServlet.class.getClassLoader().getResourceAsStream("git.properties"));
-            appVersie = props.getProperty("builddetails.build.version", "onbekend");
+
         } catch (IOException ex) {
             String name = config.getServletContext().getContextPath();
             name = name.startsWith("/") ? name.substring(1).toUpperCase(Locale.ROOT) : "ROOT";
             LOG.warn("Ophalen " + name + " applicatie versie informatie is mislukt.", ex);
         }
-        LOG.info("BRMO BRK verschilservice versie is: "+ appVersie);
+
+        LOG.info("BRMO BRK verschilservice versie is: " + props.getProperty("builddetails.build.version", "onbekend"));
+        LOG.info("Gebouwd op: " + props.getProperty("builddetails.build.time", "onbekend"));
     }
 
     @Override
@@ -64,7 +65,6 @@ public class DiagnosticsServlet implements Servlet {
 
     @Override
     public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
@@ -74,6 +74,5 @@ public class DiagnosticsServlet implements Servlet {
 
     @Override
     public void destroy() {
-        // nothing
     }
 }
