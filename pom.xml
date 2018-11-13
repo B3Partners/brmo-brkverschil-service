@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>nl.b3p</groupId>
     <artifactId>brmo-brkverschil-service</artifactId>
@@ -74,6 +75,7 @@
         <test.skipITs>true</test.skipITs>
         <junit.jupiter.version>5.3.1</junit.jupiter.version>
         <brmo.version>1.6.2-rc1</brmo.version>
+        <!-- bij bijwerken van de Tomcat versie deze ook in .mvn/owasp-suppression.xml aanpassen -->
         <tomcat.version>7.0.91</tomcat.version>
         <postgresql.jdbc.version>42.2.5</postgresql.jdbc.version>
         <maven.surefire.version>3.0.0-M1</maven.surefire.version>
@@ -87,8 +89,13 @@
         <taglist-maven-plugin.version>2.4</taglist-maven-plugin.version>
     </properties>
     <dependencies>
-        <!--gebruik `mvn -U org.codehaus.mojo:versions-maven-plugin:2.7:display-dependency-updates` om dependency updates te zoeken
-        en `mvn -U org.codehaus.mojo:versions-maven-plugin:2.7:display-plugin-updates` om plugin updates te zoeken -->
+        <!--
+        gebruik
+        `mvn -U org.codehaus.mojo:versions-maven-plugin:2.7:display-dependency-updates`
+        om dependency updates te zoeken en
+        `mvn -U org.codehaus.mojo:versions-maven-plugin:2.7:display-plugin-updates`
+        om plugin updates te zoeken
+        -->
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -568,7 +575,7 @@
                     <includes>
                         <include>**/*IntegrationTest.java</include>
                     </includes>
-                    <systemPropertyVariables />
+                    <systemPropertyVariables/>
                     <trimStackTrace>false</trimStackTrace>
                     <useFile>false</useFile>
                     <skipTests>${test.skipITs}</skipTests>
@@ -779,7 +786,7 @@
                                     <skip>${test.skipITs}</skip>
                                     <jarScanAllDirectories>false</jarScanAllDirectories>
                                     <uriEncoding>UTF-8</uriEncoding>
-                                    <systemProperties />
+                                    <systemProperties/>
                                 </configuration>
                             </execution>
                             <execution>
@@ -867,7 +874,9 @@
                                     <description>release v${project.version}</description>
                                     <releaseName>v${project.version}</releaseName>
                                     <tag>${project.artifactId}-${project.version}</tag>
-                                    <artifact>${project.build.directory}/${project.build.finalName}-${project.version}-bin.zip</artifact>
+                                    <artifact>
+                                        ${project.build.directory}/${project.build.finalName}-${project.version}-bin.zip
+                                    </artifact>
                                     <overwriteArtifact>true</overwriteArtifact>
                                     <fileSets>
                                         <fileSet>
@@ -883,21 +892,21 @@
                     </plugin>
                     <!-- https://github.com/cy6erGn0m/github-release-plugin -->
                     <!--<plugin>-->
-                        <!--<groupId>cy.github</groupId>-->
-                        <!--<artifactId>github-release-plugin</artifactId>-->
-                        <!--<version>${plugin.version}</version>-->
-                        <!--<configuration>-->
-                            <!--<tagName>${project.artifactId}-${project.version}</tagName>-->
-                            <!--<preRelease>true</preRelease>-->
-                        <!--</configuration>-->
-                        <!--<executions>-->
-                            <!--<execution>-->
-                                <!--<goals>-->
-                                    <!--<goal>gh-upload</goal>-->
-                                <!--</goals>-->
-                                <!--<phase>deploy</phase>-->
-                            <!--</execution>-->
-                        <!--</executions>-->
+                    <!--<groupId>cy.github</groupId>-->
+                    <!--<artifactId>github-release-plugin</artifactId>-->
+                    <!--<version>${plugin.version}</version>-->
+                    <!--<configuration>-->
+                    <!--<tagName>${project.artifactId}-${project.version}</tagName>-->
+                    <!--<preRelease>true</preRelease>-->
+                    <!--</configuration>-->
+                    <!--<executions>-->
+                    <!--<execution>-->
+                    <!--<goals>-->
+                    <!--<goal>gh-upload</goal>-->
+                    <!--</goals>-->
+                    <!--<phase>deploy</phase>-->
+                    <!--</execution>-->
+                    <!--</executions>-->
                     <!--</plugin>-->
                 </plugins>
             </build>
