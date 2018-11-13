@@ -773,6 +773,19 @@
                             mvn clean test tomcat7:run -Ppostgresql
                             -->
                             <contextFile>${project.build.directory}/test-classes/testcontext.xml</contextFile>
+                            <extraDependencies>
+                                <extraDependency>
+                                    <groupId>org.postgresql</groupId>
+                                    <artifactId>postgresql</artifactId>
+                                    <version>${postgresql.jdbc.version}</version>
+                                </extraDependency>
+                                <extraDependency>
+                                <!-- voor de integratie tests-->
+                                    <groupId>org.jacoco</groupId>
+                                    <artifactId>org.jacoco.agent</artifactId>
+                                    <version>${jacoco-maven-plugin.version}</version>
+                                </extraDependency>
+                            </extraDependencies>
                         </configuration>
                         <executions>
                             <execution>

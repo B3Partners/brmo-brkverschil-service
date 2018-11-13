@@ -31,10 +31,13 @@ timestamps {
                 echo "Running unit tests"
                 sh "mvn -e test -B"
             }
-
-            stage('Integration Test') {
-                echo "Running integration tests"
-                sh "mvn -e -B clean verify -Ppostgresql" 
+            lock('tomcat-tcp9090') {
+                timeout(10) {
+                    stage('Integration Test') {
+                        echo "Running integration tests"
+                        sh "mvn -e -B clean verify -Ppostgresql"
+                    }
+                }
             }
 
             stage('Publish Test Results') {
