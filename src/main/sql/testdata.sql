@@ -1,3 +1,3 @@
 -- test data
-insert into tax.belastingplichtige values('EDE02','A','02772','P','0000','1234567');
-insert into tax.belastingplichtige values('EDE02','A','03314','P','0000','2345678');
+insert into tax.belastingplichtige values('VDG00','B','01708','P','0000','1234567');
+insert into tax.belastingplichtige values('VDG00','B','01709','P','0000','2345678');
