@@ -101,7 +101,7 @@ public class BasicLoginFilter implements Filter {
         String authHeader = request.getHeader(AUTHORIZATION_HEADER);
         if (authHeader == null || !authHeader.startsWith(BASIC_PREFIX)) {
             LOG.debug("BASIC Authorization header ontbreekt (401)");
-            handle401(response);
+            this.handle401(response);
             return;
         }
 
@@ -110,7 +110,7 @@ public class BasicLoginFilter implements Filter {
         String credentials = new String(Base64.getDecoder().decode(userPassBase64), StandardCharsets.UTF_8);
         if (!credentials.contains(":")) {
             LOG.debug("geen `:` in user:password combo (401)");
-            handle401(response);
+            this.handle401(response);
             return;
         }
 
@@ -121,7 +121,7 @@ public class BasicLoginFilter implements Filter {
             // do login, nodig voor request.isUserInRole(...)
             request.login(authUser, authPass);
         } catch (ServletException ex) {
-            handle403(response);
+            this.handle403(response);
             return;
         }
 
