@@ -45,7 +45,7 @@ timestamps {
             }
 
             stage('Test Coverage results') {
-                jacoco exclusionPattern: '**/*Test.class'
+                jacoco exclusionPattern: '**/*Test*.class', classPattern: '**/target/classes', execPattern: '**/target/**.exec'
             }
 
             stage('OWASP Dependency Check') {
