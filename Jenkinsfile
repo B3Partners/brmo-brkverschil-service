@@ -31,7 +31,7 @@ timestamps {
                 echo "Running unit tests"
                 sh "mvn -e test -B"
             }
-            lock('tomcat-tcp9090') {
+            lock('tomcat-tcp9091') {
                 timeout(10) {
                     stage('Integration Test') {
                         echo "Running integration tests"
