@@ -178,9 +178,9 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         long nwOnrrgd = this.getNieuweOnroerendGoed(workDir);
         LOG.info("Aantal nieuwe onroerende zaken is: " + nwOnrrgd);
         // 2.4
-        LOG.debug("Ophalen nieuwe onroerende zaken");
+        LOG.debug("Ophalen gekoppelde objecten");
         long gekoppeld = this.getGekoppeldeObjecten(workDir);
-        LOG.info("Aantal gekoppelde objecten: " + gekoppeld);
+        LOG.info("Aantal gekoppeld objecten: " + gekoppeld);
         // 2.5
         LOG.debug("Ophalen vervallen objecten");
         long vervallen = this.getVervallenOnroerendGoed(workDir);
