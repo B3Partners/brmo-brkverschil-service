@@ -460,7 +460,8 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("tax.perceelnummer, ")
                 .append("tax.deelperceelnummer, ")
                 .append("tax.appartementsindex, ")
-                .append("tax.kpr_nummer, ")
+                // altijd leeg want alleen als belastingplichtige onbekend is is verkoop relevant
+                .append("kpr_nummer, ")
                 .append("z.ar_teller AS aandeel_teller, ")
                 .append("z.ar_noemer AS aandeel_noemer, ")
                 .append("z.fk_3avr_aand AS rechtcode, ")
@@ -495,7 +496,9 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("WHERE '[")
                 .append(df.format(van)).append(",").append(df.format(tot))
                 .append("]'::DATERANGE @> bron.datum ")
-                .append("AND z.fk_8pes_sc_identif IS NOT null");
+                .append("AND z.fk_8pes_sc_identif IS NOT null ")
+                // alleen verkochte percelen waar belastingplichtige onbekend is
+                .append(" AND tax.kpr_nummer IS null ");
 
         switch (f) {
             case "csv":

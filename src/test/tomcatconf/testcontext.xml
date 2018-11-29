@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Context path="/brmo-brkverschil-service">
-    <!-- properties komen uit postgres.properties tijdens package? phase -->
-
+    <!-- properties komen uit postgres.properties -->
     <Resource name="jdbc/brmo/staging"
               auth="Container"
               type="javax.sql.DataSource"
