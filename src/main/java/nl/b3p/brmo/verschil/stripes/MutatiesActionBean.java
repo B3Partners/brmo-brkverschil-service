@@ -219,7 +219,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                             Files.copy(path, zs);
                             zs.closeEntry();
                         } catch (IOException e) {
-                            System.err.println(e);
+                            LOG.error("Probleem tijdens aanmaken van zipfile", e);
                         }
                     });
         }
