@@ -3,15 +3,25 @@
          xmlns="http://java.sun.com/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
-    <!-- Localization context voor o.a. de <fmt:message> JSTL tag -->
     <context-param>
+        <description>Localization context voor o.a. de fmt:message JSTL tag</description>
         <param-name>javax.servlet.jsp.jstl.fmt.localizationContext</param-name>
         <param-value>StripesResources</param-value>
     </context-param>
-    <!-- NL locale voor formatten van getallen: 1.234.567,89 -->
     <context-param>
+        <description>NL locale voor formatten van getallen: 1.234.567,89</description>
         <param-name>javax.servlet.jsp.jstl.fmt.locale</param-name>
         <param-value>nl</param-value>
+    </context-param>
+    <context-param>
+        <description>true om materialized views te gebruiken in de queries</description>
+        <param-name>use_mv</param-name>
+        <param-value>true</param-value>
+    </context-param>
+    <context-param>
+        <description>database recordset fetch size</description>
+        <param-name>jdbc_fetch_size</param-name>
+        <param-value>1000</param-value>
     </context-param>
     <filter>
         <display-name>BasicLogin Filter</display-name>

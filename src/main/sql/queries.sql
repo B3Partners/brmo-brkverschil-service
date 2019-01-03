@@ -1,3 +1,5 @@
+-- Uitvoeren opdracht met parameters: van=2018-08-01 tot=2019-01-03
+
 -- Ophalen nieuwe onroerende zaken
 SELECT DISTINCT
     o.kad_identif,
@@ -68,7 +70,7 @@ ON
     AND q.ka_perceelnummer = trim(LEADING '0' FROM tax.perceelnummer)
     AND COALESCE(q.ka_appartementsindex, '') = COALESCE(trim(LEADING '0' FROM tax.appartementsindex), ''))
 WHERE
-    '[2017-08-01,2018-10-02]'::DATERANGE @> o.dat_beg_geldh::DATE
+    '[2018-08-01,2019-01-03]'::DATERANGE @> o.dat_beg_geldh::DATE
 AND o.kad_identif NOT IN
     (
         SELECT
@@ -76,10 +78,11 @@ AND o.kad_identif NOT IN
         FROM
             kad_onrrnd_zk_archief
         WHERE
-            '2017-08-01'::DATE < dat_beg_geldh::DATE)
+            '2018-08-01'::DATE < dat_beg_geldh::DATE)
 AND z.fk_8pes_sc_identif IS NOT NULL;
 
--- Ophalen nieuwe onroerende zaken
+
+-- Ophalen gekoppelde objecten
 SELECT DISTINCT
     adr.koz_identif,
     adr.gemeentecode,
@@ -95,9 +98,9 @@ SELECT DISTINCT
     adr.woonplaats,
     adr.postcode
 FROM
-    vb_kad_onrrnd_zk_adres adr
+    mb_kad_onrrnd_zk_adres adr
 WHERE
-    '[2017-08-01,2018-10-02]'::DATERANGE @> adr.begin_geldigheid::DATE
+    '[2018-08-01,2019-01-03]'::DATERANGE @> adr.begin_geldigheid::DATE
 AND adr.koz_identif NOT IN
     (
         SELECT
@@ -105,7 +108,11 @@ AND adr.koz_identif NOT IN
         FROM
             kad_onrrnd_zk_archief
         WHERE
-            '2017-08-01'::DATE < dat_beg_geldh::DATE);
+            '2018-08-01'::DATE < dat_beg_geldh::DATE)
+ORDER BY
+    adr.koz_identif;
+
+
 
 -- Ophalen vervallen objecten
 SELECT DISTINCT
@@ -119,9 +126,9 @@ ON
     arch.deelperceelnummer,
     arch.appartementsindex
 FROM
-    vb_kad_onrrnd_zk_archief arch
+    mb_kad_onrrnd_zk_archief arch
 WHERE
-    '[2017-08-01,2018-10-02]'::DATERANGE @> arch.eind_geldigheid::DATE
+    '[2018-08-01,2019-01-03]'::DATERANGE @> arch.eind_geldigheid::DATE
 AND arch.koz_identif NOT IN
     (
         SELECT
@@ -132,6 +139,7 @@ ORDER BY
     arch.koz_identif,
     arch.eind_geldigheid::DATE DESC;
 
+
 -- Ophalen object verkopen
 SELECT DISTINCT
     bron.ref_id,
@@ -141,7 +149,7 @@ SELECT DISTINCT
     tax.perceelnummer,
     tax.deelperceelnummer,
     tax.appartementsindex,
-    tax.kpr_nummer,
+    kpr_nummer,
     z.ar_teller                      AS aandeel_teller,
     z.ar_noemer                      AS aandeel_noemer,
     z.fk_3avr_aand                   AS rechtcode,
@@ -197,9 +205,10 @@ ON
     AND q.ka_perceelnummer = trim(LEADING '0' FROM tax.perceelnummer)
     AND COALESCE(q.ka_appartementsindex, '') = COALESCE(trim(LEADING '0' FROM tax.appartementsindex), ''))
 WHERE
-    '[2017-08-01,2018-10-02]'::DATERANGE @> bron.datum
+    '[2018-08-01,2019-01-03]'::DATERANGE @> bron.datum
 AND z.fk_8pes_sc_identif IS NOT NULL
-AND tax.kpr_nummer IS null;
+AND tax.kpr_nummer IS NULL;
+
 
 -- Ophalen oppervlakte veranderd objecten
 SELECT DISTINCT
@@ -218,7 +227,7 @@ FROM
     kad_perceel_archief pa,
     kad_perceel k
 WHERE
-    '[2017-08-01,2018-10-02]'::DATERANGE @> za.dat_beg_geldh::DATE
+    '[2018-08-01,2019-01-03]'::DATERANGE @> za.dat_beg_geldh::DATE
 AND za.dat_beg_geldh = pa.sc_dat_beg_geldh
 AND za.kad_identif = pa.sc_kad_identif
 AND za.kad_identif = k.sc_kad_identif
@@ -230,10 +239,12 @@ AND za.kad_identif IN
         FROM
             kad_onrrnd_zk
         WHERE
-            '[2017-08-01,2018-10-02]'::DATERANGE @> dat_beg_geldh::DATE)
+            '[2018-08-01,2019-01-03]'::DATERANGE @> dat_beg_geldh::DATE)
 ORDER BY
     za.kad_identif,
     za.dat_beg_geldh DESC;
+
+
 
 -- Ophalen nieuwe subjecten
 SELECT DISTINCT
@@ -258,7 +269,7 @@ ON
     q.postcode,
     q.woonplaats
 FROM
-    vb_koz_rechth q
+    mb_koz_rechth q
 LEFT JOIN
     tax.belastingplichtige tax
 ON
@@ -268,7 +279,7 @@ ON
     AND q.perceelnummer = trim(LEADING '0' FROM tax.perceelnummer)
     AND COALESCE(q.appartementsindex, '') = COALESCE(trim(LEADING '0' FROM tax.appartementsindex), ''))
 WHERE
-    '[2017-08-01,2018-10-02]'::DATERANGE @> q.begin_geldigheid::DATE
+    '[2018-08-01,2019-01-03]'::DATERANGE @> q.begin_geldigheid::DATE
 AND q.koz_identif NOT IN
     (
         SELECT
@@ -276,11 +287,12 @@ AND q.koz_identif NOT IN
         FROM
             kad_onrrnd_zk_archief
         WHERE
-            '2017-08-01'::DATE < dat_beg_geldh::DATE)
+            '2018-08-01'::DATE < dat_beg_geldh::DATE)
 AND tax.kpr_nummer IS NULL
 ORDER BY
     q.naam,
     q.begin_geldigheid ASC;
+
 
 -- Ophalen BSN aangepast
 SELECT
@@ -300,4 +312,4 @@ WHERE
         FROM
             ander_nat_prs)
 AND hm.tabel = 'subject'
-AND '[2017-08-01,2018-10-02]'::DATERANGE @> datum::DATE;
+AND '[2018-08-01,2019-01-03]'::DATERANGE @> datum::DATE;

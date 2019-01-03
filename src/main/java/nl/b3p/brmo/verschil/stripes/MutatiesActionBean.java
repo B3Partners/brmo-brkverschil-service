@@ -719,6 +719,8 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
             VIEW_KOZ_RECHTHEBBENDE = VIEW_KOZ_RECHTHEBBENDE.replaceFirst("vb_", "mb_");
             VIEW_KAD_ONRRND_ZK_ADRES = VIEW_KAD_ONRRND_ZK_ADRES.replaceFirst("vb_", "mb_");
             VIEW_KAD_ONRRND_ZK_ARCHIEF = VIEW_KAD_ONRRND_ZK_ARCHIEF.replaceFirst("vb_", "mb_");
+        } else {
+            LOG.warn("Gebruik reguliere views in de queries (langzaam).");
         }
 
         try {
