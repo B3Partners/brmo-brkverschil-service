@@ -204,7 +204,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
 
         if (nwOnrrgd < 0 || gekoppeld < 0 || vervallen < 0 || verkopen < 0 || oppVeranderd < 0 || nwSubject < 0 || bsn < 0) {
             errorCondition = true;
-            LOG.trace("Een van de queries heeft een onverwacht resultaat gegeven, errorCondition="+errorCondition);
+            LOG.trace("Een van de queries heeft een onverwacht resultaat gegeven, errorCondition=" + errorCondition);
         }
         // zippen resultaat in workZip
         try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(workZip.toPath()))) {
@@ -720,7 +720,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
             VIEW_KAD_ONRRND_ZK_ADRES = VIEW_KAD_ONRRND_ZK_ADRES.replaceFirst("vb_", "mb_");
             VIEW_KAD_ONRRND_ZK_ARCHIEF = VIEW_KAD_ONRRND_ZK_ARCHIEF.replaceFirst("vb_", "mb_");
         } else {
-            LOG.warn("Gebruik reguliere views in de queries (langzaam).");
+            LOG.warn("Gebruik reguliere views in de queries (zeer langzaam).");
         }
 
         try {

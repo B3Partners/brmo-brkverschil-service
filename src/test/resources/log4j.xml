@@ -2,9 +2,17 @@
 <!DOCTYPE log4j:configuration PUBLIC "-//APACHE//DTD LOG4J 1.2//EN" "log4j.dtd">
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
     <appender name="consoleAppender" class="org.apache.log4j.ConsoleAppender">
-        <param name="Threshold" value="all"/>
+        <param name="Threshold" value="info"/>
         <layout class="org.apache.log4j.EnhancedPatternLayout">
             <param name="ConversionPattern" value="BRMO-BRKVERSCHIL-SERVICE-TEST: %5p %d{HH:mm:ss} (%C{1.}#%M:%L) - %m%n"/>
+        </layout>
+    </appender>
+    <appender name="fileAppender" class="org.apache.log4j.FileAppender">
+        <param name="File" value="target/test.log" />
+        <param name="Append" value="true" />
+        <param name="Threshold" value="all" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%5p %d{HH:mm:ss} (%C{1}#%M:%L) - %m%n" />
         </layout>
     </appender>
     <logger name="org.dbunit.database">
@@ -22,6 +30,9 @@
     <logger name="org.dbunit.ext">
         <level value="info"/>
     </logger>
+    <logger name="org.apache.http">
+        <level value="info"/>
+    </logger>
     <logger name="org.apache.http.wire">
         <level value="info"/>
     </logger>
@@ -37,5 +48,6 @@
     <root>
         <level value="info"/>
         <appender-ref ref="consoleAppender"/>
+        <appender-ref ref="fileAppender"/>
     </root>
 </log4j:configuration>

@@ -29,6 +29,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
+ * Draaien met:
+ * {@code mvn -Dit.test=MutatiesActionBeanValidationIntegrationTest -Dtest.skipTs=true verify -Ppostgresql > target/pgtests.log}.
  *
  * @author mprins
  */
@@ -54,7 +56,7 @@ public class MutatiesActionBeanValidationIntegrationTest extends TestUtil {
 
     @Test
     public void testOngeldigeVan() throws IOException {
-        response = client.execute(new HttpGet(BASE_TEST_URL + "rest/mutatiess?van=18-02-01"));
+        response = client.execute(new HttpGet(BASE_TEST_URL + "rest/mutaties?van=18-02-01"));
         String body = EntityUtils.toString(response.getEntity());
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode(), "Response status is niet Bad Request.");
@@ -64,7 +66,7 @@ public class MutatiesActionBeanValidationIntegrationTest extends TestUtil {
 
     @Test
     public void testTotVoorVan() throws IOException {
-        response = client.execute(new HttpGet(BASE_TEST_URL + "rest/mutatiess?van=2018-02-01&tot=2018-01-01"));
+        response = client.execute(new HttpGet(BASE_TEST_URL + "rest/mutaties?van=2018-02-01&tot=2018-01-01"));
         String body = EntityUtils.toString(response.getEntity());
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode(), "Response status is niet Bad Request.");
@@ -72,4 +74,12 @@ public class MutatiesActionBeanValidationIntegrationTest extends TestUtil {
         assertTrue(body.contains("`van` datum is voor `tot` datum"), "Response body bevat de verwachte melding niet");
     }
 
+    @Test
+    public void testVanTot() throws IOException {
+        response = client.execute(new HttpGet(BASE_TEST_URL + "rest/mutaties?van=2018-01-01&tot=2018-01-10"));
+        String body = EntityUtils.toString(response.getEntity());
+
+        assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode(), "Response status is niet OK.");
+        assertNotNull(body, "Response body mag niet null zijn.");
+    }
 }
