@@ -574,6 +574,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     private long getBSNAangevuld(File workDir) {
         StringBuilder sql = new StringBuilder("SELECT ")
                 .append("inp.bsn, ")
+                .append("inp.sc_identif, ")
                 .append("hm.datum::TEXT ")
                 // (?)KPR nummer kan niet want er was toch geen bsn bekend dus waar komt dat dan vandaan?
                 .append("FROM ingeschr_nat_prs inp ")
