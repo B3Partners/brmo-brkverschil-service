@@ -526,6 +526,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("q.voorvoegsel, ")
                 .append("q.voornamen, ")
                 .append("q.naam, ")
+                .append("q.subject_identif")
                 .append("q.woonadres, ")
                 .append("q.geboortedatum, ")
                 .append("q.overlijdensdatum, ")
