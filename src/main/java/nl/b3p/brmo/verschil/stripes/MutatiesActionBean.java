@@ -490,7 +490,8 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("ON bron.ref_id=q.sc_kad_identif::text ")
                 .append("LEFT JOIN zak_recht z ON bron.ref_id = z.fk_7koz_kad_identif::text ")
                 .append("LEFT JOIN aard_verkregen_recht avr ON z.fk_3avr_aand = avr.aand ")
-                .append("JOIN ")
+                // gebruik left join ipv join; mail Dimitri dd.23 april 2019
+                .append("LEFT JOIN ")
                 // levert b
                 .append(TAX_JOIN_CLAUSE_TBL)
                 .append("WHERE '[")
