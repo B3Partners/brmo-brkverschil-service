@@ -3,7 +3,7 @@
     <suppress>
         <notes>
             <![CDATA[
-                     Negeer melding mbt tomcat-api-7.0.92.jar omdat we geen tomcat mee
+                     Negeer melding mbt tomcat-api-7.0.94.jar omdat we geen tomcat mee
                      leveren en deze alleen voor bepaalde deployments geldt.
             ]]>
         </notes>
@@ -15,7 +15,7 @@
     <suppress>
         <notes>
             <![CDATA[
-                     Negeer melding mbt tomcat-util-7.0.92.jar omdat we geen tomcat mee
+                     Negeer melding mbt tomcat-util-7.0.94.jar omdat we geen tomcat mee
                      leveren en deze alleen voor bepaalde deployments geldt.
             ]]>
         </notes>
@@ -27,7 +27,7 @@
     <suppress>
         <notes>
             <![CDATA[
-                     file name: tomcat-catalina-7.0.92.jar
+                     file name: tomcat-catalina-7.0.94.jar
             ]]>
         </notes>
         <gav regex="true">^org\.apache\.tomcat:tomcat-catalina:.*$</gav>
