@@ -38,10 +38,12 @@ public class MutatiesActionBeanValidationIntegrationTest extends TestUtil {
 
     private HttpResponse response;
 
+    /**
+     * dummy, required by {@link TestUtil}.
+     */
     @BeforeEach
     @Override
     public void setUp() {
-        // dummy
     }
 
     @Test

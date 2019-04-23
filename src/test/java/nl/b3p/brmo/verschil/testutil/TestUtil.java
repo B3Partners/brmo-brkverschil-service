@@ -51,6 +51,7 @@ public abstract class TestUtil {
 
     /**
      * onze test client.
+     *
      * @see #setUpHttpClient()
      */
     protected static CloseableHttpClient client;
@@ -104,6 +105,7 @@ public abstract class TestUtil {
         // the `database.properties.file`  is set in the pom.xml or using the commandline
         DBPROPS.load(TestUtil.class.getClassLoader()
                 .getResourceAsStream(System.getProperty("database.properties.file")));
+        // .getResourceAsStream("postgresql.properties"));
         try {
             // see if a local version exists and use that to override
             DBPROPS.load(TestUtil.class.getClassLoader()
@@ -111,7 +113,7 @@ public abstract class TestUtil {
         } catch (IOException | NullPointerException e) {
             // ignore this
         }
-
+        LOG.trace("test database: " + DBPROPS);
         try {
             Class driverClass = Class.forName(DBPROPS.getProperty("jdbc.driverClassName"));
         } catch (ClassNotFoundException ex) {
@@ -126,7 +128,7 @@ public abstract class TestUtil {
      */
     @BeforeEach
     final public void startTest(TestInfo testInfo) {
-        LOG.info("==== Start test methode: " + testInfo.getTestMethod());
+        LOG.info("==== Start test methode: " + testInfo.getDisplayName());
     }
 
     /**
@@ -136,7 +138,7 @@ public abstract class TestUtil {
      */
     @AfterEach
     final public void endTest(TestInfo testInfo) {
-        LOG.info("==== Einde test methode: " + testInfo.getTestMethod());
+        LOG.info("==== Einde test methode: " + testInfo.getDisplayName());
     }
 
     /**
