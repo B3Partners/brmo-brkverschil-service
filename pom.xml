@@ -78,7 +78,7 @@
         <tomcat.version>7.0.94</tomcat.version>
         <postgresql.jdbc.version>42.2.5</postgresql.jdbc.version>
         <maven.surefire.version>3.0.0-M3</maven.surefire.version>
-        <jacoco-maven-plugin.version>0.8.3</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.4</jacoco-maven-plugin.version>
         <jacoco.it.execution.data.file>${project.build.directory}/jacoco-it.exec</jacoco.it.execution.data.file>
         <jacoco.ut.execution.data.file>${project.build.directory}/jacoco-ut.exec</jacoco.ut.execution.data.file>
         <versions-maven-plugin.version>2.7</versions-maven-plugin.version>
