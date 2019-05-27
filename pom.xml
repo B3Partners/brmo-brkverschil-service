@@ -72,7 +72,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <test.skipTs>false</test.skipTs>
         <test.skipITs>true</test.skipITs>
-        <junit.jupiter.version>5.4.1</junit.jupiter.version>
+        <junit.jupiter.version>5.4.2</junit.jupiter.version>
         <brmo.version>1.6.3p1</brmo.version>
         <!-- bij bijwerken van de Tomcat versie deze ook in .mvn/owasp-suppression.xml aanpassen -->
         <tomcat.version>7.0.94</tomcat.version>
@@ -113,7 +113,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.9.8</version>
+            <version>2.9.9</version>
         </dependency>
         <dependency>
             <groupId>org.stripesstuff</groupId>
@@ -217,7 +217,7 @@
         <dependency>
             <groupId>net.javacrumbs.json-unit</groupId>
             <artifactId>json-unit</artifactId>
-            <version>2.6.1</version>
+            <version>2.6.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -430,7 +430,8 @@
                 <plugin>
                     <groupId>org.owasp</groupId>
                     <artifactId>dependency-check-maven</artifactId>
-                    <version>4.0.2</version>
+                    <!-- <version>4.0.2</version> -->
+                    <version>5.0.0-M3</version>
                     <configuration>
                         <enableExperimental>true</enableExperimental>
                         <retirejs>
