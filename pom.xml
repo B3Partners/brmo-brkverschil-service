@@ -431,7 +431,7 @@
                     <groupId>org.owasp</groupId>
                     <artifactId>dependency-check-maven</artifactId>
                     <!-- <version>4.0.2</version> -->
-                    <version>5.0.0-M3</version>
+                    <version>5.0.0</version>
                     <configuration>
                         <enableExperimental>true</enableExperimental>
                         <retirejs>
