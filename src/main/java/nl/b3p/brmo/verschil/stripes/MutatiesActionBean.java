@@ -81,7 +81,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     private static final String TAX_JOIN_CLAUSE_TBL = new StringBuilder()
             .append("tax.belastingplichtige tax ON ( ")
             .append("      q.ka_kad_gemeentecode=trim(LEADING '0' from tax.gemeentecode) ")
-            .append("  AND q.ka_sectie=tax.sectie ")
+            .append("  AND q.ka_sectie=trim(tax.sectie)git ")
             .append("  AND q.ka_perceelnummer=trim(LEADING '0' from tax.perceelnummer) ")
             // deelperceel nummer wordt niet gevuld vanuit BRK want dat bestaat niet meer, dus ook niet in rsgb
             //.append("  AND coalesce(q.ka_deelperceelnummer,'')=coalesce(trim(LEADING '0' from tax.deelperceelnummer),'') ")
@@ -91,7 +91,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     private static final String TAX_JOIN_CLAUSE_VW = new StringBuilder()
             .append("tax.belastingplichtige tax ON ( ")
             .append("      q.gemeentecode=trim(LEADING '0' from tax.gemeentecode) ")
-            .append("  AND q.sectie=tax.sectie ")
+            .append("  AND q.sectie=trim(tax.sectie) ")
             .append("  AND q.perceelnummer=trim(LEADING '0' from tax.perceelnummer) ")
             // deelperceel nummer wordt niet gevuld vanuit BRK want dat bestaat niet meer, dus ook niet in rsgb
             //.append("  AND coalesce(q.deelperceelnummer,'')=coalesce(trim(LEADING '0' from tax.deelperceelnummer),'') ")
