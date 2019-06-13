@@ -184,15 +184,15 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         // 2.5
         LOG.debug("Ophalen vervallen objecten");
         long vervallen = this.getVervallenOnroerendGoed(workDir);
-        LOG.info("Aantal vervallen: " + vervallen);
+        LOG.info("Aantal vervallen objecten: " + vervallen);
         // 2.6
         LOG.debug("Ophalen object verkopen");
         long verkopen = this.getVerkopen(workDir);
-        LOG.info("Aantal verkopen: " + verkopen);
+        LOG.info("Aantal object verkopen: " + verkopen);
         // 2.7
         LOG.debug("Ophalen oppervlakte veranderd objecten");
         long oppVeranderd = this.getGewijzigdeOpp(workDir);
-        LOG.info("Aantal oppervlakte veranderd: " + oppVeranderd);
+        LOG.info("Aantal oppervlakte veranderd objecten: " + oppVeranderd);
         // 2.8
         LOG.debug("Ophalen nieuwe subjecten");
         long nwSubject = this.getNieuweSubjecten(workDir);
