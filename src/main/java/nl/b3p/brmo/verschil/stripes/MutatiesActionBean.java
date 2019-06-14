@@ -134,6 +134,12 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      */
     private String SEP = ";";
     /**
+     * CSV quote character.
+     *
+     * @see #initParams()
+     */
+    private String QUOTE = "";
+    /**
      * newline voor CSV output.
      */
     private final String NL = System.getProperty("line.separator");
@@ -708,10 +714,13 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                     LOG.trace("uitlezen query resultaat metadata");
                     // schrijf kolommen
                     for (int j = 1; j < (numCols + 1); j++) {
+                        out.append(QUOTE);
                         out.append(metaData.getColumnName(j));
                         if (j < numCols) {
+                            out.append(QUOTE);
                             out.append(SEP);
                         } else {
+                            out.append(QUOTE);
                             out.append(NL);
                         }
                     }
@@ -723,10 +732,13 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                             // het zou mooier zijn om de type specifieke getters van de resultset te gebruiken,
                             // maar uiteindelijk doen we toch een toString() dus resultaat is gelijk.
                             String o = r.getString(k);
+                            out.append(QUOTE);
                             out.append(o != null ? o : "");
                             if (k < numCols) {
+                                out.append(QUOTE);
                                 out.append(SEP);
                             } else {
+                                out.append(QUOTE);
                                 out.append(NL);
                             }
                         }
@@ -765,7 +777,13 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         final String sep = getContext().getServletContext().getInitParameter("csv_separator_char");
         if (sep != null && !sep.isEmpty()) {
             SEP = sep;
-            LOG.info(String.format("Gebruik '%s' als schdeingsteken in CSV", SEP));
+            LOG.info(String.format("Gebruik '%s' als scheidingsteken in CSV", SEP));
+        }
+
+        final String quote = getContext().getServletContext().getInitParameter("csv_quote_char");
+        if (quote != null && !quote.isEmpty()) {
+            QUOTE = quote;
+            LOG.info(String.format("Gebruik '%s' als aanhalingsteken in CSV", QUOTE));
         }
 
         try {

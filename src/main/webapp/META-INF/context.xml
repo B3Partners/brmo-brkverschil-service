@@ -15,4 +15,6 @@
     <Parameter description="database recordset fetch size" name="jdbc_fetch_size" value="0" override="false"/>
     <!-- csv kolom scheidingsteken -->
     <Parameter description="csv record separator" name="csv_separator_char" value=";" override="false"/>
+    <!-- csv waarde/aanhalingsteken -->
+    <Parameter description="csv quote character" name="csv_quote_char" value="" override="false"/>
 </Context>
