@@ -263,8 +263,11 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      * @return aantal nieuw
      */
     private long getNieuweOnroerendGoed(File workDir) {
-        // de ON (o.kad_identif) zorgt ervoor dat we niet voor ieder bron object van een samenvoeging een record krijgen
-        StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (o.kad_identif) ")
+
+        StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
+                // de ON (o.kad_identif) zorgt ervoor dat we niet voor ieder bron 
+                //  object van een samenvoeging een record krijgen, maar dat is een uitdrukkelijke wens (mail dd.18-12-18)
+                // .append("ON (o.kad_identif) ")
                 .append("o.kad_identif, ")
                 .append("o.dat_beg_geldh, ")
                 .append("q.ka_kad_gemeentecode  AS gemeentecode, ")
