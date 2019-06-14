@@ -29,8 +29,10 @@ is met FORM based authenticatie beveiligd.
 
 De webapplicatie kan met een aantal context parameters worden getuned, in onderstaande tabel een overzicht.
 
-| parameter  | default | omschrijving |
-| ---------- | --------|--------------|
-|use_mv      |false    |`true` om materialized views te gebruiken in de queries, `false` om reguliere views te gebruiken |
-|jdbc_fetch_size|1000  | aantal records om in 1 keer op te halen uit de database |
-
+| parameter         | default | omschrijving                                            |
+| ----------------- | --------|---------------------------------------------------------|
+|use_mv             |true     |`true` om materialized views te gebruiken in de queries, `false` om reguliere views te gebruiken |
+|jdbc_fetch_size    |1000     | aantal records om in 1 keer op te halen uit de database |
+|jdbc_query_timeout |600      | aantal seconden voordat een query timeout fout optreedt |
+|csv_separator_char | ;       | csv kolom scheidingsteken                               |
+|csv_quote_char     | <blanco>| csv waarde/aanhalingsteken                              |
