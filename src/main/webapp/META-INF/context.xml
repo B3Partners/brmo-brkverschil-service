@@ -9,6 +9,10 @@
     </Realm>
     <!-- true om materialized views te gebruiken in de queries -->
     <Parameter description="true om materialized views te gebruiken in de queries" name="use_mv" value="true" override="false"/>
-    <!-- database recordset fetch size -->
-    <Parameter description="database recordset fetch size" name="jdbc_fetch_size" value="1000" override="false"/>
+    <!-- query timout cvoor database queries in seconden -->
+    <Parameter description="database query timeout" name="jdbc_query_timeout" value="600" override="false"/>
+    <!-- database recordset fetch size hint, default 0 -->
+    <Parameter description="database recordset fetch size" name="jdbc_fetch_size" value="0" override="false"/>
+    <!-- csv kolom scheidingsteken -->
+    <Parameter description="csv record separator" name="csv_separator_char" value=";" override="false"/>
 </Context>

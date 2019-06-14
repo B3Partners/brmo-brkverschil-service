@@ -11,7 +11,8 @@
         <param name="Threshold" value="all"/>
         <param name="File" value="${catalina.base}/logs/brmo-brkverschil-service.log"/>
         <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="%5p %d{yyyy-MM-dd HH:mm:ss} (%C#%M:%L) - %m%n"/>
+            <!--<param name="ConversionPattern" value="%5p %d{yyyy-MM-dd HH:mm:ss} (%l) - %m%n"/>-->
+            <param name="ConversionPattern" value="%5p %d{yyyy-MM-dd HH:mm:ss} (%c) - %m%n"/>
         </layout>
     </appender>
     <logger name="nl.b3p.brmo.verschil">

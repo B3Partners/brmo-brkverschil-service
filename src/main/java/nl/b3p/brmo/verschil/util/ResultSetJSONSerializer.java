@@ -48,6 +48,7 @@ public class ResultSetJSONSerializer extends JsonSerializer<ResultSet> {
     public void serialize(ResultSet resultSet, JsonGenerator gen, SerializerProvider serializers) throws ResultSetSerializerException {
         long counted = 0;
         try {
+            LOG.trace("uitlezen query resultaat metadata");
             ResultSetMetaData metaData = resultSet.getMetaData();
             int numCols = metaData.getColumnCount();
             String[] colNames = new String[numCols];
@@ -57,7 +58,7 @@ public class ResultSetJSONSerializer extends JsonSerializer<ResultSet> {
                 colTypes[i] = metaData.getColumnType(i + 1);
             }
             gen.writeStartArray();
-
+            LOG.trace("uitlezen en uitschrijven query resultaat");
             while (resultSet.next()) {
                 boolean b;
                 long l;

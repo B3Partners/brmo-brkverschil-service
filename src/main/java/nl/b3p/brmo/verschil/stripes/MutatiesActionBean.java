@@ -80,23 +80,22 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     // als gekoppeld wordt met een table
     private static final String TAX_JOIN_CLAUSE_TBL = new StringBuilder()
             .append("tax.belastingplichtige tax ON ( ")
-            .append("      q.ka_kad_gemeentecode=trim(LEADING '0' from tax.gemeentecode) ")
-            .append("  AND q.ka_sectie=trim(tax.sectie) ")
-            .append("  AND q.ka_perceelnummer=trim(LEADING '0' from tax.perceelnummer) ")
+            .append("      q.ka_kad_gemeentecode = trim(LEADING '0' from tax.gemeentecode) ")
+            .append("  AND q.ka_sectie           = trim(tax.sectie) ")
+            .append("  AND q.ka_perceelnummer    = trim(LEADING '0' from tax.perceelnummer) ")
             // deelperceel nummer wordt niet gevuld vanuit BRK want dat bestaat niet meer, dus ook niet in rsgb
             //.append("  AND coalesce(q.ka_deelperceelnummer,'')=coalesce(trim(LEADING '0' from tax.deelperceelnummer),'') ")
-            .append("  AND coalesce(q.ka_appartementsindex,'')=coalesce(trim(LEADING '0' from tax.appartementsindex),'') )").toString();
+            .append("  AND coalesce(q.ka_appartementsindex,'') = coalesce(trim(LEADING '0' from tax.appartementsindex),'') )").toString();
 
     // als gekoppeld wordt met een view
     private static final String TAX_JOIN_CLAUSE_VW = new StringBuilder()
             .append("tax.belastingplichtige tax ON ( ")
-            .append("      q.gemeentecode=trim(LEADING '0' from tax.gemeentecode) ")
-            .append("  AND q.sectie=trim(tax.sectie) ")
-            .append("  AND q.perceelnummer=trim(LEADING '0' from tax.perceelnummer) ")
+            .append("      q.gemeentecode  = trim(LEADING '0' from tax.gemeentecode) ")
+            .append("  AND q.sectie        = trim(tax.sectie) ")
+            .append("  AND q.perceelnummer = trim(LEADING '0' from tax.perceelnummer) ")
             // deelperceel nummer wordt niet gevuld vanuit BRK want dat bestaat niet meer, dus ook niet in rsgb
             //.append("  AND coalesce(q.deelperceelnummer,'')=coalesce(trim(LEADING '0' from tax.deelperceelnummer),'') ")
-            //.append("  AND coalesce(q.deelperceelnummer,'')=coalesce(trim(LEADING '0' from tax.deelperceelnummer),'') ")
-            .append("  AND coalesce(q.appartementsindex,'')=coalesce(trim(LEADING '0' from tax.appartementsindex),'') )").toString();
+            .append("  AND coalesce(q.appartementsindex,'') = coalesce(trim(LEADING '0' from tax.appartementsindex),'') )").toString();
 
     /**
      * context param voor view vb_koz_rechth.
@@ -117,11 +116,27 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      */
     private String VIEW_KAD_ONRRND_ZK_ARCHIEF = "vb_kad_onrrnd_zk_archief";
     /**
-     * context param voor view JDBC_FETCH_SIZE.
+     * context param voor sql JDBC_FETCH_SIZE.
      *
      * @see #initParams()
      */
-    private int JDBC_FETCH_SIZE = 1000;
+    private int JDBC_FETCH_SIZE = 0;
+    /**
+     * context param voor sql timeout.
+     *
+     * @see #initParams()
+     */
+    private int QRY_TIMEOUT = 600;
+    /**
+     * CSV separator character.
+     *
+     * @see #initParams()
+     */
+    private String SEP = ";";
+    /**
+     * newline voor CSV output.
+     */
+    private final String NL = System.getProperty("line.separator");
 
     @ValidationMethod(when = ValidationState.NO_ERRORS)
     public void validateVanBeforeTot(ValidationErrors errors) {
@@ -160,7 +175,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     public Resolution get() throws IOException {
         errorCondition = false;
         LOG.trace("`get` met params: van=" + van + " tot=" + tot + ", format: " + f);
-        LOG.info("Uitvoeren opdracht met params: van=" + df.format(van) + " tot=" + df.format(tot));
+        LOG.info(String.format("Uitvoeren opdracht met params: van=%s tot=%s", df.format(van), df.format(tot)));
         this.initParams();
         // maak werkdirectory en werkbestand
         Path workPath = Files.createTempDirectory(
@@ -636,13 +651,14 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                     stm.setString(index++, p);
                 }
 
-                stm.setFetchDirection(ResultSet.FETCH_FORWARD);
-                stm.setFetchSize(JDBC_FETCH_SIZE);
-                LOG.debug(stm);
-
                 SimpleModule module = new SimpleModule();
                 ResultSetJSONSerializer serializer = new ResultSetJSONSerializer();
                 ObjectMapper mapper = new ObjectMapper();
+
+                stm.setQueryTimeout(QRY_TIMEOUT);
+                stm.setFetchDirection(ResultSet.FETCH_FORWARD);
+                stm.setFetchSize(JDBC_FETCH_SIZE);
+                LOG.debug(stm);
 
                 try (ResultSet r = stm.executeQuery()) {
                     module.addSerializer(serializer);
@@ -667,9 +683,6 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     private long queryToCSV(File workDir, String bestandsNaam, String sql, String... params) {
         long count = -1;
 
-        final String NL = System.getProperty("line.separator");
-        final String SEP = ";";
-
         try (Connection c = ConfigUtil.getDataSourceRsgb().getConnection()) {
             c.setReadOnly(true);
 
@@ -679,6 +692,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                     stm.setString(index++, p);
                 }
 
+                stm.setQueryTimeout(QRY_TIMEOUT);
                 stm.setFetchDirection(ResultSet.FETCH_FORWARD);
                 stm.setFetchSize(JDBC_FETCH_SIZE);
                 LOG.debug(stm);
@@ -688,7 +702,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                         Writer out = new OutputStreamWriter(new BufferedOutputStream(fos), "UTF-8")) {
                     ResultSetMetaData metaData = r.getMetaData();
                     int numCols = metaData.getColumnCount();
-
+                    LOG.trace("uitlezen query resultaat metadata");
                     // schrijf kolommen
                     for (int j = 1; j < (numCols + 1); j++) {
                         out.append(metaData.getColumnName(j));
@@ -700,7 +714,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                     }
 
                     count = 0;
-                    // schrijf data
+                    LOG.trace("uitlezen en uitschrijven query resultaat");
                     while (r.next()) {
                         for (int k = 1; k < (numCols + 1); k++) {
                             // het zou mooier zijn om de type specifieke getters van de resultset te gebruiken,
@@ -728,7 +742,6 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     }
 
     private void initParams() {
-        LOG.debug("laden van context params");
         boolean use_mv = Boolean.parseBoolean(getContext().getServletContext().getInitParameter("use_mv"));
         if (use_mv) {
             LOG.info("Gebruik materialized views in de queries.");
@@ -741,16 +754,32 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
 
         try {
             JDBC_FETCH_SIZE = Integer.parseInt(getContext().getServletContext().getInitParameter("jdbc_fetch_size"));
-            LOG.debug("Gebruik fetch size van " + JDBC_FETCH_SIZE);
+            LOG.info(String.format("Gebruik fetch size van: %s records", JDBC_FETCH_SIZE));
         } catch (Exception e) {
             // ignore
         }
+
+        final String sep = getContext().getServletContext().getInitParameter("csv_separator_char");
+        if (sep != null && !sep.isEmpty()) {
+            SEP = sep;
+            LOG.info(String.format("Gebruik '%s' als schdeingsteken in CSV", SEP));
+        }
+
+        try {
+            QRY_TIMEOUT = Integer.parseInt(getContext().getServletContext().getInitParameter("jdbc_query_timeout"));
+            LOG.info(String.format("Gebruik query timout van: %s seconden", QRY_TIMEOUT));
+        } catch (Exception e) {
+            // ignore
+        }
+
     }
 
+    @Override
     public ActionBeanContext getContext() {
         return context;
     }
 
+    @Override
     public void setContext(ActionBeanContext context) {
         this.context = context;
     }
