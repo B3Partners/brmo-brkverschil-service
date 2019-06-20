@@ -76,7 +76,7 @@
         <brmo.version>1.6.3p1</brmo.version>
         <!-- bij bijwerken van de Tomcat versie deze ook in .mvn/owasp-suppression.xml aanpassen -->
         <tomcat.version>7.0.94</tomcat.version>
-        <postgresql.jdbc.version>42.2.5</postgresql.jdbc.version>
+        <postgresql.jdbc.version>42.2.6</postgresql.jdbc.version>
         <maven.surefire.version>3.0.0-M3</maven.surefire.version>
         <jacoco-maven-plugin.version>0.8.4</jacoco-maven-plugin.version>
         <jacoco.it.execution.data.file>${project.build.directory}/jacoco-it.exec</jacoco.it.execution.data.file>
@@ -175,7 +175,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.2.5</version>
+            <version>42.2.6</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
