@@ -44,12 +44,12 @@
         <repository>
             <id>repo.b3p.nl</id>
             <name>B3Partners releases repository</name>
-            <url>https://repo.b3p.nl/nexus/repository/releases/</url>
+            <url>https://repo.b3p.nl/nexus/repository/privatereleases/</url>
         </repository>
         <snapshotRepository>
             <id>repo.b3p.nl</id>
             <name>B3Partners snapshots repository</name>
-            <url>https://repo.b3p.nl/nexus/repository/snapshots/</url>
+            <url>https://repo.b3p.nl/nexus/repository/privatesnapshots/</url>
         </snapshotRepository>
     </distributionManagement>
     <repositories>
@@ -57,6 +57,14 @@
             <id>B3Partners</id>
             <name>Releases hosted by B3Partners</name>
             <url>https://repo.b3p.nl/nexus/repository/public/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>B3Partners-private</id>
+            <name>Releases hosted by B3Partners</name>
+            <url>https://repo.b3p.nl/nexus/repository/private/</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -884,58 +892,7 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- TODO auto upload van zipfile naar GH release
-                    https://github.com/jutzig/github-release-plugin -->
-                    <plugin>
-                        <groupId>de.jutzig</groupId>
-                        <artifactId>github-release-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>github-upload</id>
-                                <phase>deploy</phase>
-                                <goals>
-                                    <goal>release</goal>
-                                </goals>
-                                <inherited>false</inherited>
-                                <configuration>
-                                    <description>release v${project.version}</description>
-                                    <releaseName>v${project.version}</releaseName>
-                                    <tag>${project.artifactId}-${project.version}</tag>
-                                    <artifact>
-                                        ${project.build.directory}/${project.build.finalName}-${project.version}-bin.zip
-                                    </artifact>
-                                    <overwriteArtifact>true</overwriteArtifact>
-                                    <fileSets>
-                                        <fileSet>
-                                            <directory>${project.build.directory}</directory>
-                                            <includes>
-                                                <include>${project.build.finalName}-${project.version}-bin.zip</include>
-                                            </includes>
-                                        </fileSet>
-                                    </fileSets>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <!-- https://github.com/cy6erGn0m/github-release-plugin -->
-                    <!--<plugin>-->
-                    <!--<groupId>cy.github</groupId>-->
-                    <!--<artifactId>github-release-plugin</artifactId>-->
-                    <!--<version>${plugin.version}</version>-->
-                    <!--<configuration>-->
-                    <!--<tagName>${project.artifactId}-${project.version}</tagName>-->
-                    <!--<preRelease>true</preRelease>-->
-                    <!--</configuration>-->
-                    <!--<executions>-->
-                    <!--<execution>-->
-                    <!--<goals>-->
-                    <!--<goal>gh-upload</goal>-->
-                    <!--</goals>-->
-                    <!--<phase>deploy</phase>-->
-                    <!--</execution>-->
-                    <!--</executions>-->
-                    <!--</plugin>-->
-                </plugins>
+               </plugins>
             </build>
         </profile>
     </profiles>
