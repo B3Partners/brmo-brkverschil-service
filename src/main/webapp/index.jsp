@@ -12,8 +12,8 @@
         </dl>
         <h3>Voorbeelden van de REST API URLs</h3>
         <ul>
-            <li><a href="${contextPath}/rest/mutaties?van=2018-08-01">mutaties vanaf 2018-08-01</a></li>
-            <li><a href="${contextPath}/rest/mutaties?van=2018-08-01&f=csv">mutaties vanaf 2018-08-01</a> in csv formaat</li>
+            <li><a href="${contextPath}/rest/mutaties?van=2019-01-01">mutaties vanaf 2019-01-01</a></li>
+            <li><a href="${contextPath}/rest/mutaties?van=2019-01-01&f=csv">mutaties vanaf 2019-01-01</a> in csv formaat</li>
             <li><a href="${contextPath}/rest/mutaties?van=2018-08-01&tot=2018-09-01">mutaties vanaf 2018-08-01 tot 2018-09-01</a></li>
             <li><a href="${contextPath}/rest/mutaties"><strong>foutief verzoek</strong></a> (geen vanaf datum)</li>
             <li><a href="${contextPath}/rest/mutaties?van=18-08-01&tot=18-09-01"><strong>foutief verzoek</strong></a> (ongeldige datums)</li>
@@ -28,9 +28,9 @@
         <p>Hieronder zijn een aantal voorbeelden voor gebruik van `wget` en `curl` te vinden.
             Een voorbeeld met java code is te vinden in de <a href="https://github.com/B3Partners/brmo-brkverschil-service/blob/master/src/test/java/nl/b3p/brmo/verschil/stripes/PingActionBeanIntegrationTest.java">PingActionBeanIntegrationTest</a></p>
         <ul>
-            <li><code>curl --user mutaties:mutaties "${contextService}${contextPath}/rest/mutaties?van=2018-08-01" --verbose --output test.zip</code></li>
-            <li><code>wget --http-user=mutaties --http-password=mutaties "${contextService}${contextPath}/rest/mutaties?van=2018-08-01" -O test.zip</code></li>
-            <li><code>wget --http-user=mutaties --http-password=mutaties "${contextService}${contextPath}/rest/mutaties?van=2018-08-01" -O test.zip;unzip -oq test.zip</code> Om bestanden meteen met 7-zip uit te pakken</li>
+            <li><code>curl --user mutaties:mutaties "${contextService}${contextPath}/rest/mutaties?van=2019-01-01" --verbose --output test.zip</code></li>
+            <li><code>wget --http-user=mutaties --http-password=mutaties "${contextService}${contextPath}/rest/mutaties?van=2019-01-01" -O test.zip</code></li>
+            <li><code>wget --http-user=mutaties --http-password=mutaties "${contextService}${contextPath}/rest/mutaties?van=2019-01-01" -O test.zip;unzip -oq test.zip</code> Om bestanden meteen met 7-zip uit te pakken</li>
         </ul>
         <h3>Beveiliging</h3>
         <p>De REST endpoints zijn afgeschermd met BASIC authenticatie, in tegenstelling tot de web applicatie / GUI die middels

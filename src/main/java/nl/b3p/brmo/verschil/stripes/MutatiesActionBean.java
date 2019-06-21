@@ -283,7 +283,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("q.ka_appartementsindex AS appartementsindex, ")
                 .append("tax.kpr_nummer, ")
                 .append("bel.bpl_identif, ")
-                .append("bel.naam_belastingplichtige, ")
+                .append("bel.naam_zakelijk_gerechtigde, ")
                 .append("q.grootte_perceel, ")
                 .append("q.x, ")
                 .append("q.y, ")
@@ -333,7 +333,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 // ophalen aanduiding van 'onstaan uit'
                 .append("LEFT JOIN mb_kad_onrrnd_zk_archief arch ON h.fk_sc_rh_koz_kad_identif = arch.koz_identif ")
                 // belastingplichtige
-                .append("LEFT JOIN wdd.belastingplichtige bel ON o.kad_identif = bel.sc_kad_identif ")
+                .append("LEFT JOIN wdd.kad_zak_recht bel ON o.kad_identif = bel.sc_kad_identif ")
                 // BKP erbij
                 .append("LEFT JOIN ")
                 .append(TAX_JOIN_CLAUSE_TBL)
