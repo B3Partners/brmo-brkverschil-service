@@ -35,4 +35,4 @@ De webapplicatie kan met een aantal context parameters worden getuned, in onders
 |jdbc_fetch_size    |1000     | aantal records om in 1 keer op te halen uit de database |
 |jdbc_query_timeout |600      | aantal seconden voordat een query timeout fout optreedt |
 |csv_separator_char | ;       | csv kolom scheidingsteken                               |
-|csv_quote_char     | <blanco>| csv waarde/aanhalingsteken                              |
+|csv_quote_char     | `<leeg>`| csv waarde/aanhalingsteken                              |
