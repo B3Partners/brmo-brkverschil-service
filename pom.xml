@@ -80,7 +80,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <test.skipTs>false</test.skipTs>
         <test.skipITs>true</test.skipITs>
-        <junit.jupiter.version>5.4.2</junit.jupiter.version>
+        <junit.jupiter.version>5.5.0</junit.jupiter.version>
         <brmo.version>1.6.3p1</brmo.version>
         <!-- bij bijwerken van de Tomcat versie deze ook in .mvn/owasp-suppression.xml aanpassen -->
         <tomcat.version>7.0.94</tomcat.version>
@@ -439,7 +439,7 @@
                     <groupId>org.owasp</groupId>
                     <artifactId>dependency-check-maven</artifactId>
                     <!-- <version>4.0.2</version> -->
-                    <version>5.0.0</version>
+                    <version>5.1.0</version>
                     <configuration>
                         <enableExperimental>true</enableExperimental>
                         <retirejs>
