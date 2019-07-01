@@ -18,36 +18,42 @@ WHERE '[2019-01-01,2019-06-17]'::DATERANGE @> arch.eind_geldigheid::date
 AND arch.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk) 
 ORDER BY arch.koz_identif, arch.eind_geldigheid::date DESC;
 
--- resultaat (2019-01-01-nu): 11225 rows in 3.6 sec.
+-- resultaat (2019-01-01-nu): 11225 rows in 3.6 sec. (PG 9.6: timeout)
 -- resultaat (2018-01-01-nu): 37298 rows in 5.2 sec.
 -- resultaat (2017-01-01-nu): 42789 rows in 5.6 sec.
+
 
 
 -- variant met NOT EXISTS
 DEALLOCATE ALL;
 DISCARD PLANS;
 DISCARD TEMP;
-SELECT DISTINCT ON (arch.koz_identif) arch.koz_identif, arch.eind_geldigheid, arch.gemeentecode, arch.sectie, arch.perceelnummer, arch.deelperceelnummer, arch.appartementsindex 
-FROM mb_kad_onrrnd_zk_archief arch 
-WHERE '[2018-01-01,2019-06-17]'::DATERANGE @> arch.eind_geldigheid::date 
-AND NOT EXISTS (SELECT kad_identif FROM kad_onrrnd_zk koz WHERE koz.kad_identif = arch.koz_identif ) 
+SELECT DISTINCT ON (arch.koz_identif) arch.koz_identif, arch.eind_geldigheid, arch.gemeentecode, arch.sectie, arch.perceelnummer, arch.deelperceelnummer, arch.appartementsindex
+FROM mb_kad_onrrnd_zk_archief arch
+WHERE '[2019-01-01,2019-06-17]'::DATERANGE @> arch.eind_geldigheid::date
+AND NOT EXISTS (SELECT kad_identif FROM kad_onrrnd_zk koz WHERE koz.kad_identif = arch.koz_identif )
 ORDER BY arch.koz_identif, arch.eind_geldigheid::date DESC;
 
--- resultaat (2019-01-01-nu): 11225 rows in 1.4 sec.
--- resultaat (2018-01-01-nu): 37298 rows in 4.4 sec.
--- resultaat (2017-01-01-nu): 42789 rows in 4.9 sec.
+-- resultaat (2019-01-01-nu): 11225 rows in 1.4 sec. (PG 9.6: 1.9 sec)
+-- resultaat (2018-01-01-nu): 37298 rows in 4.4 sec. (PG 9.6: 4.7 sec)
+-- resultaat (2017-01-01-nu): 42789 rows in 4.9 sec. (PG 9.6: 5.6 sec)
+
+
 
 -- variant met LEFT OUTER JOIN
 DEALLOCATE ALL;
 DISCARD PLANS;
 DISCARD TEMP;
-SELECT DISTINCT ON (arch.koz_identif) arch.koz_identif, arch.eind_geldigheid, arch.gemeentecode, arch.sectie, arch.perceelnummer, arch.deelperceelnummer, arch.appartementsindex 
-FROM mb_kad_onrrnd_zk_archief arch 
+SELECT DISTINCT ON (arch.koz_identif) arch.koz_identif, arch.eind_geldigheid, arch.gemeentecode, arch.sectie, arch.perceelnummer, arch.deelperceelnummer, arch.appartementsindex
+FROM mb_kad_onrrnd_zk_archief arch
 LEFT OUTER JOIN kad_onrrnd_zk koz ON arch.koz_identif = koz.kad_identif
-WHERE '[2019-01-01,2019-06-17]'::DATERANGE @> arch.eind_geldigheid::date 
+
+WHERE '[2019-01-01,2019-06-17]'::DATERANGE @> arch.eind_geldigheid::date
+
 AND koz.kad_identif IS NULL
+
 ORDER BY arch.koz_identif, arch.eind_geldigheid::date DESC;
 
--- resultaat (2019-01-01-nu): 11225 rows in 1.5 sec.
--- resultaat (2018-01-01-nu): 37298 rows in 4.3 sec.
--- resultaat (2017-01-01-nu): 42789 rows in 4.9 sec.
+-- resultaat (2019-01-01-nu): 11225 rows in 1.5 sec. (PG 9.6: 1.8 sec)
+-- resultaat (2018-01-01-nu): 37298 rows in 4.3 sec. (PG 9.6: 4.9 sec)
+-- resultaat (2017-01-01-nu): 42789 rows in 4.9 sec. (PG 9.6: 5.6 sec)
