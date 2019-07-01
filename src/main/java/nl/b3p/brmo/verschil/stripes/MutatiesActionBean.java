@@ -196,7 +196,9 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         // uitvoeren queries
         // 2.3
         LOG.debug("Ophalen nieuwe onroerende zaken");
-        long nwOnrrgd = this.getNieuweOnroerendGoed(workDir);
+        // TODO query optimaliseren voor 9.6
+        // long nwOnrrgd = this.getNieuweOnroerendGoed(workDir);
+        long nwOnrrgd = 0;
         LOG.info("Aantal nieuwe onroerende zaken is: " + nwOnrrgd);
         // 2.4
         LOG.debug("Ophalen gekoppelde objecten");
@@ -214,9 +216,12 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         LOG.debug("Ophalen oppervlakte veranderd objecten");
         long oppVeranderd = this.getGewijzigdeOpp(workDir);
         LOG.info("Aantal oppervlakte veranderd objecten: " + oppVeranderd);
+
         // 2.8
         LOG.debug("Ophalen nieuwe subjecten");
-        long nwSubject = this.getNieuweSubjecten(workDir);
+        // TODO query optimaliseren voor 9.6
+        // long nwSubject = this.getNieuweSubjecten(workDir);
+        long nwSubject = 0;
         LOG.info("Aantal nieuwe subjecten: " + nwSubject);
         // 2.9
         LOG.debug("Ophalen BSN aangepast");
@@ -269,7 +274,6 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      * @return aantal nieuw
      */
     private long getNieuweOnroerendGoed(File workDir) {
-
         StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
                 // de ON (o.kad_identif) zorgt ervoor dat we niet voor ieder bron 
                 //  object van een samenvoeging een record krijgen, maar dat is een uitdrukkelijke wens (mail dd.18-12-18)
@@ -371,6 +375,27 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      * @return aantal gekoppelde objecten
      */
     private long getGekoppeldeObjecten(File workDir) {
+// herschrijf de NOT IN naar NOT EXISTS tbv. PG 9.6
+//        StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
+//                .append("adr.koz_identif, ")
+//                .append("adr.gemeentecode, ")
+//                .append("adr.sectie, ")
+//                .append("adr.perceelnummer, ")
+//                .append("adr.appartementsindex, ")
+//                .append("adr.loc_omschr, ")
+//                .append("adr.benoemdobj_identif, ")
+//                .append("adr.straatnaam, ")
+//                .append("adr.huisnummer, ")
+//                .append("adr.huisletter, ")
+//                .append("adr.huisnummer_toev, ")
+//                .append("adr.woonplaats, ")
+//                .append("adr.postcode ")
+//                .append("FROM ").append(VIEW_KAD_ONRRND_ZK_ADRES).append(" adr ")
+//                .append(" WHERE '[")
+//                .append(df.format(van)).append(",").append(df.format(tot)).append("]'::DATERANGE @> adr.begin_geldigheid::date ")
+//                .append("AND adr.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
+//                .append(df.format(van))
+//                .append("'::date < dat_beg_geldh::date) ORDER BY adr.koz_identif");
         StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
                 .append("adr.koz_identif, ")
                 .append("adr.gemeentecode, ")
@@ -388,7 +413,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("FROM ").append(VIEW_KAD_ONRRND_ZK_ADRES).append(" adr ")
                 .append(" WHERE '[")
                 .append(df.format(van)).append(",").append(df.format(tot)).append("]'::DATERANGE @> adr.begin_geldigheid::date ")
-                .append("AND adr.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
+                .append("AND NOT EXISTS (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE kad_identif = adr.koz_identif AND '")
                 .append(df.format(van))
                 .append("'::date < dat_beg_geldh::date) ORDER BY adr.koz_identif");
         switch (f) {
@@ -408,8 +433,28 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      * @return aantal vervallen
      */
     private long getVervallenOnroerendGoed(File workDir) {
+// PG 9.6 -itt 10.9- heeft nog steeds problemen met "not in"-subquery; daarom herschreven naar "LEFT OUTER JOIN"
+//        StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (arch.koz_identif) ")
+//                .append("arch.koz_identif, ")
+//                .append("arch.eind_geldigheid, ")
+//                .append("arch.gemeentecode, ")
+//                .append("arch.sectie, ")
+//                .append("arch.perceelnummer, ")
+//                .append("arch.deelperceelnummer, ")
+//                .append("arch.appartementsindex ")
+//                // 0-padding
+//                .append("FROM ")
+//                .append(VIEW_KAD_ONRRND_ZK_ARCHIEF)
+//                .append(" arch ")
+//                // object heeft archief record in gevraagde periode
+//                .append("WHERE '[")
+//                .append(df.format(van)).append(",").append(df.format(tot))
+//                .append("]'::DATERANGE @> arch.eind_geldigheid::date ")
+//                // object niet meer in actuele tabel
+//                .append("AND arch.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk) ")
+//                // alleen de jongste archief record
+//                .append("ORDER BY arch.koz_identif, arch.eind_geldigheid::date DESC");
         StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (arch.koz_identif) ")
-                // TODO data uit RSGB heeft geen 0-padding
                 .append("arch.koz_identif, ")
                 .append("arch.eind_geldigheid, ")
                 .append("arch.gemeentecode, ")
@@ -421,12 +466,13 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("FROM ")
                 .append(VIEW_KAD_ONRRND_ZK_ARCHIEF)
                 .append(" arch ")
+                .append("LEFT OUTER JOIN kad_onrrnd_zk koz ON arch.koz_identif = koz.kad_identif ")
                 // object heeft archief record in gevraagde periode
                 .append("WHERE '[")
                 .append(df.format(van)).append(",").append(df.format(tot))
                 .append("]'::DATERANGE @> arch.eind_geldigheid::date ")
                 // object niet meer in actuele tabel
-                .append("AND arch.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk) ")
+                .append("AND koz.kad_identif IS NULL ")
                 // alleen de jongste archief record
                 .append("ORDER BY arch.koz_identif, arch.eind_geldigheid::date DESC");
 
@@ -504,9 +550,13 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("z.fk_3avr_aand AS rechtcode, ")
                 .append("avr.omschr_aard_verkregenr_recht AS rechtomschrijving ")
                 // verkoop + datum
-                .append("FROM ( ")
-                .append("  SELECT brondocument.ref_id, max(brondocument.datum) AS datum FROM brondocument WHERE brondocument.omschrijving = 'Akte van Koop en Verkoop' GROUP BY brondocument.ref_id) bron ")
+                .append("FROM ( SELECT brondocument.ref_id, max(brondocument.datum) AS datum FROM brondocument ")
+                // NB "Akte van Koop en Verkoop" zit altijd in BRONDOCUMENT tabel
+                .append("    WHERE brondocument.tabel='BRONDOCUMENT' AND brondocument.omschrijving = 'Akte van Koop en Verkoop' ")
+                .append("         AND '[").append(df.format(van)).append(",").append(df.format(tot)).append("]'::DATERANGE @> brondocument.datum ")
+                .append(" GROUP BY brondocument.ref_id) bron ")
                 // samengestelde app_re en kad_perceel als q
+                // zou evt ook "VIEW_KAD_ONRRND_ZK_ADRES" kunnen gebruuken, maar dat is niet sneller
                 .append("LEFT JOIN (SELECT  ")
                 .append("  ar.sc_kad_identif, ")
                 .append("  ar.ka_kad_gemeentecode, ")
@@ -524,19 +574,18 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("  null AS ka_appartementsindex ")
                 .append("FROM kad_perceel p) q ")
                 // einde samenstelling app_re en kad_perceel als q
-                .append("ON bron.ref_id=q.sc_kad_identif::text ")
-                .append("LEFT JOIN zak_recht z ON bron.ref_id = z.fk_7koz_kad_identif::text ")
+                .append("ON bron.ref_id::BIGINT=q.sc_kad_identif ")
+                .append("LEFT JOIN zak_recht z ON bron.ref_id::BIGINT = z.fk_7koz_kad_identif ")
                 .append("LEFT JOIN aard_verkregen_recht avr ON z.fk_3avr_aand = avr.aand ")
                 // gebruik left join ipv join; mail Dimitri dd.23 april 2019
                 .append("LEFT JOIN ")
                 // levert b
                 .append(TAX_JOIN_CLAUSE_TBL)
-                .append("WHERE '[")
-                .append(df.format(van)).append(",").append(df.format(tot))
-                .append("]'::DATERANGE @> bron.datum ")
-                .append("AND z.fk_8pes_sc_identif IS NOT null ")
+                .append("WHERE ")
+                // met een rechthebbende
+                .append("z.fk_8pes_sc_identif IS NOT null ")
                 // alleen verkochte percelen waar belastingplichtige onbekend is
-                .append(" AND tax.kpr_nummer IS null ");
+                .append("AND tax.kpr_nummer IS null");
 
         switch (f) {
             case "csv":

@@ -1,4 +1,5 @@
 -- maakt tabel wdd.kad_zak_recht
+drop table wdd.kad_zak_recht;
 
 with kad_zak_recht as
     (
@@ -125,11 +126,13 @@ select sc_kad_identif
 ,      criterium_rechthebbende
 ,      criterium_geboortedatum
 ,      rij as rijnummer
+-- dump allees in deze tabel
 INTO wdd.kad_zak_recht
-from kad_zak_recht
+FROM kad_zak_recht
 WHERE kad_zak_recht.criterium_type = '1'
 OR (kad_zak_recht.criterium_type = '2' AND (nm_geslachtsnaam is not null AND bedrijfsnaam is not null))
 order by kadsleutel,criterium_type,criterium_zakelijkrecht,criterium_aandeel,criterium_rechthebbende,criterium_geboortedatum
 ;
 
+-- maak de index waar we mee joinen
 CREATE INDEX ON wdd.kad_zak_recht (sc_kad_identif );
