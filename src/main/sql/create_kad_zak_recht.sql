@@ -135,4 +135,4 @@ order by kadsleutel,criterium_type,criterium_zakelijkrecht,criterium_aandeel,cri
 ;
 
 -- maak de index waar we mee joinen
-CREATE INDEX ON wdd.kad_zak_recht (sc_kad_identif );
+CREATE INDEX ON wdd.kad_zak_recht (sc_kad_identif);

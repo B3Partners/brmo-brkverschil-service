@@ -30,7 +30,7 @@
         <ul>
             <li><code>curl --user mutaties:mutaties "${contextService}${contextPath}/rest/mutaties?van=2019-01-01" --verbose --output test.zip</code></li>
             <li><code>wget --http-user=mutaties --http-password=mutaties "${contextService}${contextPath}/rest/mutaties?van=2019-01-01" -O test.zip</code></li>
-            <li><code>wget --http-user=mutaties --http-password=mutaties "${contextService}${contextPath}/rest/mutaties?van=2019-01-01" -O test.zip;unzip -oq test.zip</code> Om bestanden meteen met 7-zip uit te pakken</li>
+            <li><code>wget --http-user=mutaties --http-password=mutaties "${contextService}${contextPath}/rest/mutaties?van=2019-01-01&f=csv" -O test.zip;unzip -oq test.zip</code> Om bestanden meteen met 7-zip uit te pakken</li>
         </ul>
         <h3>Beveiliging</h3>
         <p>De REST endpoints zijn afgeschermd met BASIC authenticatie, in tegenstelling tot de web applicatie / GUI die middels
