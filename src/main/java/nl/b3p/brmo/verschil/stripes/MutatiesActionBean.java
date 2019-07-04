@@ -97,6 +97,9 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
             //.append("  AND coalesce(q.deelperceelnummer,'')=coalesce(trim(LEADING '0' from tax.deelperceelnummer),'') ")
             .append("  AND coalesce(q.appartementsindex,'') = coalesce(trim(LEADING '0' from tax.appartementsindex),'') )").toString();
 
+    private static final String TAX_JOIN_CLAUSE_TBL_AANDUIDING2 = new StringBuilder()
+            .append("tax.belastingplichtige tax ON q.aanduiding2 = tax.aanduiding2 ").toString();
+
     /**
      * context param voor view vb_koz_rechth.
      *
@@ -630,13 +633,13 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
                 .append("bron.ref_id, ")
                 .append("bron.datum::text as verkoopdatum, ")
-                .append("tax.gemeentecode, ")
-                .append("tax.sectie, ")
-                .append("tax.perceelnummer, ")
-                .append("tax.deelperceelnummer, ")
-                .append("tax.appartementsindex, ")
-                // altijd leeg want alleen als belastingplichtige onbekend is is verkoop relevant
-                .append("kpr_nummer, ")
+                .append("q.gemeentecode, ")
+                .append("q.sectie, ")
+                .append("q.perceelnummer, ")
+                .append("q.deelperceelnummer, ")
+                .append("q.appartementsindex, ")
+                // altijd leeg/null want alleen als belastingplichtige onbekend is is verkoop relevant
+                // .append("kpr_nummer, ")
                 .append("z.ar_teller AS aandeel_teller, ")
                 .append("z.ar_noemer AS aandeel_noemer, ")
                 .append("z.fk_3avr_aand AS rechtcode, ")
@@ -648,34 +651,37 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("         AND '[").append(df.format(van)).append(",").append(df.format(tot)).append("]'::DATERANGE @> brondocument.datum ")
                 .append(" GROUP BY brondocument.ref_id) bron ")
                 // samengestelde app_re en kad_perceel als q
-                // zou evt ook "VIEW_KAD_ONRRND_ZK_ADRES" kunnen gebruuken, maar dat is niet sneller
-                .append("LEFT JOIN (SELECT  ")
-                .append("  ar.sc_kad_identif, ")
-                .append("  ar.ka_kad_gemeentecode, ")
-                .append("  ar.ka_perceelnummer, ")
-                .append("  null AS ka_deelperceelnummer, ")
-                .append("  ar.ka_sectie, ")
-                .append("  ar.ka_appartementsindex ")
-                .append("FROM app_re ar ")
-                .append("UNION ALL SELECT ")
-                .append("  p.sc_kad_identif, ")
-                .append("  p.ka_kad_gemeentecode, ")
-                .append("  p.ka_perceelnummer, ")
-                .append("  p.ka_deelperceelnummer, ")
-                .append("  p.ka_sectie, ")
-                .append("  null AS ka_appartementsindex ")
-                .append("FROM kad_perceel p) q ")
+                // zou evt ook "VIEW_KAD_ONRRND_ZK_ADRES" kunnen gebruuken, maar dat blijkt niet sneller
+//                .append("LEFT JOIN (SELECT  ")
+//                .append("  ar.sc_kad_identif, ")
+//                .append("  ar.ka_kad_gemeentecode AS gemeentecode, ")
+//                .append("  ar.ka_perceelnummer AS perceelnummer, ")
+//                .append("  null AS deelperceelnummer, ")
+//                .append("  ar.ka_sectie AS sectie, ")
+//                .append("  ar.ka_appartementsindex AS appartementsindex ")
+//                .append("FROM app_re ar ")
+//                .append("UNION ALL SELECT ")
+//                .append("  p.sc_kad_identif, ")
+//                .append("  p.ka_kad_gemeentecode AS gemeentecode, ")
+//                .append("  p.ka_perceelnummer AS perceelnummer, ")
+//                .append("  p.ka_deelperceelnummer AS deelperceelnummer, ")
+//                .append("  p.ka_sectie AS sectie, ")
+//                .append("  null AS appartementsindex ")
+//                .append("FROM kad_perceel p) q ")
                 // einde samenstelling app_re en kad_perceel als q
-                .append("ON bron.ref_id::BIGINT=q.sc_kad_identif ")
+//                .append("ON bron.ref_id::BIGINT=q.sc_kad_identif ")
+                .append("LEFT JOIN ").append(VIEW_KAD_ONRRND_ZK_ADRES)
+                .append(" q ON bron.ref_id::BIGINT=q.koz_identif ")
                 .append("LEFT JOIN zak_recht z ON bron.ref_id::BIGINT = z.fk_7koz_kad_identif ")
                 .append("LEFT JOIN aard_verkregen_recht avr ON z.fk_3avr_aand = avr.aand ")
                 // gebruik left join ipv join; mail Dimitri dd.23 april 2019
                 .append("LEFT JOIN ")
-                // levert b
-                .append(TAX_JOIN_CLAUSE_TBL)
+                .append(TAX_JOIN_CLAUSE_TBL_AANDUIDING2)
                 .append("WHERE ")
                 // met een rechthebbende
                 .append("z.fk_8pes_sc_identif IS NOT null ")
+                // eigendommen
+                .append("AND z.fk_3avr_aand IN ('2','4','3','12') ")
                 // alleen verkochte percelen waar belastingplichtige onbekend is
                 .append("AND tax.kpr_nummer IS null");
 
