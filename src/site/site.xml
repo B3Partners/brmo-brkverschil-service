@@ -1,4 +1,4 @@
-<project xsi:schemaLocation="http://maven.apache.org/DECORATION/1.8.0 http://maven.apache.org/xsd/decoration-1.8.0.xsd"
+<project xsi:schemaLocation="http://maven.apache.org/DECORATION/1.8.0 https://maven.apache.org/xsd/decoration-1.8.0.xsd"
          xmlns="http://maven.apache.org/DECORATION/1.8.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
          name="${this.name} ${this.version}">
@@ -26,6 +26,7 @@
     <menu name="Informatie" inherit="top">
       <item name="Home" href="/index.html" />
       <item name="Installatie" href="/installatie.html" />
+      <item name="Updates" href="/updates.html" />
       <item name="Ontwerp" href="/ontwerp.html" />
       <item name="Developer Notes" href="/developer-notes.html" />
     </menu>

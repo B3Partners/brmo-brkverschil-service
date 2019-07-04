@@ -39,6 +39,7 @@
             <outputDirectory />
             <includes>
                 <include>installatie.md</include>
+                <include>updates.md</include>
             </includes>
         </fileSet>
     </fileSets>

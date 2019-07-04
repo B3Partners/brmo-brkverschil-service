@@ -138,7 +138,7 @@ public class MutatiesActionBeanIntegrationTest extends TestUtil {
                 filesInZip++;
             }
         }
-        assertEquals(jsonNames.size(), filesInZip, "Onverwacht aantal json files in zipfile");
+        assertEquals(jsonNames.size()-1, filesInZip, "Onverwacht aantal json files in zipfile");
 
         // see: https://stackoverflow.com/questions/2085637/how-to-check-if-a-generated-zip-file-is-corrupted
     }
@@ -175,6 +175,6 @@ public class MutatiesActionBeanIntegrationTest extends TestUtil {
                 filesInZip++;
             }
         }
-        assertEquals(cvsNames.size(), filesInZip, "Onverwacht aantal csv files in zipfile");
+        assertEquals(cvsNames.size()-1, filesInZip, "Onverwacht aantal csv files in zipfile");
     }
 }
