@@ -1,6 +1,3 @@
--- drop de belastingplichtige tabel die voor v1.0.0-rc1 is gemaakt
-DROP TABLE IF EXISTS public.belastingplichtige cascade;
-
 -- maak schema
 CREATE SCHEMA IF NOT EXISTS tax AUTHORIZATION rsgb;
 COMMENT ON SCHEMA tax IS 'schema voor brmo-brkverschil-service koppel data';
@@ -15,6 +12,7 @@ CREATE TABLE tax.belastingplichtige (
   deelperceelnummer character varying(6),
   appartementsindex character varying(6),
   kpr_nummer        character varying(18),
+  aanduiding2       character varying(24),
   id                bigserial NOT NULL,
   CONSTRAINT belastingplichtige_pkey PRIMARY KEY (id)
 )
@@ -22,7 +20,8 @@ WITH (
   OIDS = FALSE
 );
 
-CREATE INDEX ON tax.belastingplichtige (gemeentecode, sectie, perceelnummer);
+CREATE INDEX belastingplichtige_gemeentecode_sectie_perceelnummer_idx ON tax.belastingplichtige (gemeentecode, sectie, perceelnummer);
+CREATE INDEX belastingplichtige_aanduiding2_idx ON tax.belastingplichtige (aanduiding2);
 
 COMMENT ON TABLE tax.belastingplichtige IS 'Belastingplichtigen uit GIBS - niet-RSGB tabel';
 COMMENT ON COLUMN tax.belastingplichtige.gemeentecode IS 'Groepsattribuut Kadastrale aanduiding APPARTEMENTSRECHT.Kadastrale gemeentecode - Kadastrale gemeentecode';
@@ -31,3 +30,4 @@ COMMENT ON COLUMN tax.belastingplichtige.perceelnummer IS 'Groepsattribuut Kadas
 COMMENT ON COLUMN tax.belastingplichtige.deelperceelnummer IS 'Groepsattribuut Kadastrale aanduiding KADASTRAAL PERCEEL.Deelperceelnummer - Deelperceelnummer met voorloop nullen';
 COMMENT ON COLUMN tax.belastingplichtige.appartementsindex IS 'Groepsattribuut Kadastrale aanduiding APPARTEMENTSRECHT.Appartementsindex - Appartementsindex met voorloop nullen';
 COMMENT ON COLUMN tax.belastingplichtige.kpr_nummer IS 'KPR nummer uit GIBS';
+COMMENT ON COLUMN tax.belastingplichtige.aanduiding2 IS 'Koppelsleutel, door software gevuld.';
