@@ -7,6 +7,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import javax.sql.DataSource;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.util.Locale;
 import java.util.Properties;
@@ -35,17 +36,16 @@ public class DiagnosticsServlet implements Servlet {
             LOG.warn("Ophalen " + name + " applicatie versie informatie is mislukt.", ex);
         }
         LOG.info(
-                String.format("\nBRMO BRK verschilservice versie is: %s\nGebouwd op: %s",
+                String.format("\n\nBRMO BRK verschilservice versie is: %s\nGebouwd op: %s",
                         props.getProperty("builddetails.build.version", "onbekend"),
                         props.getProperty("builddetails.build.time", "onbekend")
                 ));
 
-        try {
-            // lookup db connectie en log info
-            DataSource rsgb = ConfigUtil.getDataSourceRsgb();
-            DatabaseMetaData metadata = rsgb.getConnection().getMetaData();
+        // lookup db connectie en log info
+        try (Connection rsgb = ConfigUtil.getDataSourceRsgb().getConnection()){
+            DatabaseMetaData metadata = rsgb.getMetaData();
             LOG.info(
-                    String.format("\nDatabase en driver informatie\n\n  Database product: %s\n  Database version: %s\n  Database major:   %s\n  Database minor:   %s\n\n  DBdriver product: %s\n  DBdriver version: %s\n  DBdriver major:   %s\n  DBdriver minor:   %s",
+                    String.format("\n\nRSGB Database en driver informatie\n\n  Database product: %s\n  Database version: %s\n  Database major:   %s\n  Database minor:   %s\n\n  DBdriver product: %s\n  DBdriver version: %s\n  DBdriver major:   %s\n  DBdriver minor:   %s\n",
                             metadata.getDatabaseProductName(),
                             metadata.getDatabaseProductVersion().replace('\n', ' '),
                             metadata.getDatabaseMajorVersion(),
@@ -55,8 +55,6 @@ public class DiagnosticsServlet implements Servlet {
                             metadata.getDriverMajorVersion(),
                             metadata.getDriverMinorVersion()
                     ));
-            metadata.getConnection().close();
-            rsgb = null;
         } catch (Exception ex) {
             LOG.error(ex);
         }

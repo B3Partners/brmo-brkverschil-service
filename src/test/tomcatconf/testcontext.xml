@@ -54,4 +54,14 @@
         <CredentialHandler className="org.apache.catalina.realm.MessageDigestCredentialHandler"
                            algorithm="SHA-1" />
     </Realm -->
+    <!-- true (default) om materialized views te gebruiken in de queries -->
+    <Parameter description="true om materialized views te gebruiken in de queries" name="use_mv" value="true" override="false"/>
+    <!-- query timout cvoor database queries in seconden, default is 600 sec -->
+    <Parameter description="database query timeout" name="jdbc_query_timeout" value="600" override="false"/>
+    <!-- database recordset fetch size hint, default 0 -->
+    <Parameter description="database recordset fetch size" name="jdbc_fetch_size" value="0" override="false"/>
+    <!-- csv kolom scheidingsteken, default is ; -->
+    <Parameter description="csv record separator" name="csv_separator_char" value=";" override="false"/>
+    <!-- csv waarde/aanhalingsteken, default is leeg "" -->
+    <Parameter description="csv quote character" name="csv_quote_char" value="" override="false"/>
 </Context>
