@@ -437,7 +437,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 // belastingplichtige
                 .append("LEFT JOIN wdd.kad_zak_recht bel ON o.koz_identif = bel.sc_kad_identif ")
                 //.append("-- LEFT JOIN tax.belastingplichtige tax ON o.aanduiding2 = tax.aanduiding2 ")
-                .append("WHERE '[ ")
+                .append("WHERE '[")
                 // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief,
                 .append(df.format(van)).append(",").append(df.format(tot))
                 .append("]'::DATERANGE @> o.begin_geldigheid::date ")
