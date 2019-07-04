@@ -70,7 +70,7 @@ WHERE
             tax.belastingplichtige
         WHERE
             o.aanduiding2 = aanduiding2
-    )
+    );
 
 -- Ophalen gekoppelde objecten
 SELECT DISTINCT
@@ -210,6 +210,38 @@ ORDER BY
     za.dat_beg_geldh DESC;
 
 -- Ophalen nieuwe subjecten
+SELECT DISTINCT
+    ON (q.subject_identif)
+    q.subject_identif,
+    q.begin_geldigheid,
+    q.soort,
+    q.geslachtsnaam,
+    q.voorvoegsel,
+    q.voornamen,
+    q.naam,
+    q.woonadres,
+    q.geboortedatum,
+    q.overlijdensdatum,
+    q.bsn,
+    q.rsin,
+    q.kvk_nummer,
+    q.straatnaam,
+    q.huisnummer,
+    q.huisletter,
+    q.huisnummer_toev,
+    q.postcode,
+    q.woonplaats
+FROM
+    mb_koz_rechth q
+    LEFT OUTER JOIN
+        tax.belastingplichtige tax
+        ON q.aanduiding2 = tax.aanduiding2
+WHERE
+    '[2019-01-01,2019-07-08]'::DATERANGE @> q.begin_geldigheid::date
+    AND tax.aanduiding2 IS NULL
+ORDER BY
+    q.subject_identif,
+    q.begin_geldigheid ASC;
 
 -- Ophalen BSN aangepast
 SELECT
