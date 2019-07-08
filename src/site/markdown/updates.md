@@ -5,7 +5,7 @@
 ### database
 
 De tabel `belastingplichtige` in schema `tax` is aangepast met een extra kolom. 
-Voer de volgende SQL statements uit om de tabel bij te werken:
+Voer de volgende SQL 5 statements uit om de tabel bij te werken:
 
 ```sql
 ALTER TABLE tax.belastingplichtige ADD COLUMN aanduiding2 CHARACTER VARYING(24);

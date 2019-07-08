@@ -218,12 +218,9 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         LOG.debug("Ophalen oppervlakte veranderd objecten");
         long oppVeranderd = this.getGewijzigdeOpp(workDir);
         LOG.info("Aantal oppervlakte veranderd objecten: " + oppVeranderd);
-
         // 2.8
         LOG.debug("Ophalen nieuwe subjecten");
-        // TODO query optimaliseren voor 9.6
-        // long nwSubject = this.getNieuweSubjecten(workDir);
-        long nwSubject = 0;
+        long nwSubject = this.getNieuweSubjecten(workDir);
         LOG.info("Aantal nieuwe subjecten: " + nwSubject);
         // 2.9
         LOG.debug("Ophalen BSN aangepast");
@@ -703,14 +700,14 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      * @return aantal nieuwe subjecten
      */
     private long getNieuweSubjecten(File workDir) {
-        StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (q.naam) ")
+        StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (q.subject_identif) ")
+                .append("q.subject_identif, ")
                 .append("q.begin_geldigheid, ")
                 .append("q.soort, ")
                 .append("q.geslachtsnaam, ")
                 .append("q.voorvoegsel, ")
                 .append("q.voornamen, ")
                 .append("q.naam, ")
-                .append("q.subject_identif, ")
                 .append("q.woonadres, ")
                 .append("q.geboortedatum, ")
                 .append("q.overlijdensdatum, ")
@@ -725,19 +722,25 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("q.woonplaats ")
                 // altijd null: tax.kpr_nummer
                 .append("FROM ").append(VIEW_KOZ_RECHTHEBBENDE).append(" q ")
-                .append("LEFT JOIN ")
-                .append(TAX_JOIN_CLAUSE_VW)
-                // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief,
-                // maar niet in de archief tabel met een datum voor "van".
+                .append("LEFT OUTER JOIN ").append(TAX_JOIN_CLAUSE_TBL_AANDUIDING2)
+
                 .append("WHERE '[")
+                // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief,
                 .append(df.format(van)).append(",").append(df.format(tot))
                 .append("]'::DATERANGE @> q.begin_geldigheid::date ")
-                .append("AND q.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
-                .append(df.format(van)).append("'::date < dat_beg_geldh::date) ")
-                // die niet gekoppeld kunnen worden
-                .append("AND tax.kpr_nummer IS NULL ")
+                // maar niet in de archief tabel met een datum voor "van".
+                // .append("AND q.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
+                //.append(df.format(van)).append("'::date < dat_beg_geldh::date) ")
+                //
+                //.append("AND NOT EXISTS (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE dat_beg_geldh::date < '")
+                //.append(df.format(van))
+                //.append("'::date AND q.koz_identif = kad_identif ) ")
+
+                // onbekend in GIBS
+                //.append("AND tax.kpr_nummer IS NULL ")
+                .append("AND tax.aanduiding2 IS NULL ")
                 // alleen de eerste naam met de oudste datum
-                .append("ORDER BY q.naam, q.begin_geldigheid ASC");
+                .append("ORDER BY q.subject_identif, q.begin_geldigheid ASC");
 
         switch (f) {
             case "csv":
