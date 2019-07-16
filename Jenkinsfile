@@ -51,7 +51,7 @@ timestamps {
             stage('OWASP Dependency Check') {
                 echo "Uitvoeren OWASP dependency check"
                 sh "mvn org.owasp:dependency-check-maven:check"
-                dependencyCheckPublisher canComputeNew: false, defaultEncoding: '', healthy: '85', pattern: '**/dependency-check-report.xml', shouldDetectModules: true, unHealthy: ''
+                dependencyCheckPublisher
             }
         }
     }
