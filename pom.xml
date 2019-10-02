@@ -84,7 +84,7 @@
         <brmo.version>1.6.3p1</brmo.version>
         <tomcat.version>7.0.96</tomcat.version>
         <postgresql.jdbc.version>42.2.8</postgresql.jdbc.version>
-        <slf4j.version>1.8.0-beta4</slf4j.version>
+        <slf4j.version>2.0.0-alpha1</slf4j.version>
         <maven.surefire.version>3.0.0-M3</maven.surefire.version>
         <jacoco-maven-plugin.version>0.8.4</jacoco-maven-plugin.version>
         <jacoco.it.execution.data.file>${project.build.directory}/jacoco-it.exec</jacoco.it.execution.data.file>
