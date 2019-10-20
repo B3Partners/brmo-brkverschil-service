@@ -7,8 +7,6 @@
            digest="SHA-1">
         <CredentialHandler className="org.apache.catalina.realm.MessageDigestCredentialHandler" algorithm="SHA-1"/>
     </Realm>
-    <!-- true (default) om materialized views te gebruiken in de queries -->
-    <Parameter description="true om materialized views te gebruiken in de queries" name="use_mv" value="true" override="false"/>
     <!-- query timout cvoor database queries in seconden, default is 600 sec -->
     <Parameter description="database query timeout" name="jdbc_query_timeout" value="600" override="false"/>
     <!-- database recordset fetch size hint, default 0 -->

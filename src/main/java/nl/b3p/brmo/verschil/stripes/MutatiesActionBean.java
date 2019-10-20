@@ -105,19 +105,19 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      *
      * @see #initParams()
      */
-    private String VIEW_KOZ_RECHTHEBBENDE = "vb_koz_rechth";
+    private String VIEW_KOZ_RECHTHEBBENDE = "mb_koz_rechth";
     /**
      * context param voor view vb_kad_onrrnd_zk_adres.
      *
      * @see #initParams()
      */
-    private String VIEW_KAD_ONRRND_ZK_ADRES = "vb_kad_onrrnd_zk_adres";
+    private String VIEW_KAD_ONRRND_ZK_ADRES = "mb_kad_onrrnd_zk_adres";
     /**
      * context param voor view vb_kad_onrrnd_zk_archief.
      *
      * @see #initParams()
      */
-    private String VIEW_KAD_ONRRND_ZK_ARCHIEF = "vb_kad_onrrnd_zk_archief";
+    private String VIEW_KAD_ONRRND_ZK_ARCHIEF = "mb_kad_onrrnd_zk_archief";
     /**
      * context param voor sql JDBC_FETCH_SIZE.
      *
@@ -907,16 +907,6 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     }
 
     private void initParams() {
-        boolean use_mv = Boolean.parseBoolean(getContext().getServletContext().getInitParameter("use_mv"));
-        if (use_mv) {
-            LOG.info("Gebruik materialized views in de queries.");
-            VIEW_KOZ_RECHTHEBBENDE = VIEW_KOZ_RECHTHEBBENDE.replaceFirst("vb_", "mb_");
-            VIEW_KAD_ONRRND_ZK_ADRES = VIEW_KAD_ONRRND_ZK_ADRES.replaceFirst("vb_", "mb_");
-            VIEW_KAD_ONRRND_ZK_ARCHIEF = VIEW_KAD_ONRRND_ZK_ARCHIEF.replaceFirst("vb_", "mb_");
-        } else {
-            LOG.warn("Gebruik reguliere views in de queries (zeer langzaam).");
-        }
-
         try {
             JDBC_FETCH_SIZE = Integer.parseInt(getContext().getServletContext().getInitParameter("jdbc_fetch_size"));
             LOG.info(String.format("Gebruik fetch size van: %s records", JDBC_FETCH_SIZE));

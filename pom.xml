@@ -81,7 +81,7 @@
         <test.skipTs>false</test.skipTs>
         <test.skipITs>true</test.skipITs>
         <junit.jupiter.version>5.5.2</junit.jupiter.version>
-        <brmo.version>1.6.3p1</brmo.version>
+        <brmo.version>1.6.4-SNAPSHOT</brmo.version>
         <tomcat.version>7.0.96</tomcat.version>
         <postgresql.jdbc.version>42.2.8</postgresql.jdbc.version>
         <slf4j.version>1.8.0-beta4</slf4j.version>
