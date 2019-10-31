@@ -196,14 +196,14 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         File workZip = Files.createTempFile("brkmutsvc", ".zip").toFile();
         workZip.deleteOnExit();
 
-        this.checkTaxAanduiding2();
+    //    this.checkTaxAanduiding2();
         // uitvoeren queries
         // 2.3
         LOG.debug("Ophalen nieuwe onroerende zaken");
         long nwOnrrgd = this.getNieuweOnroerendGoed(workDir);
         LOG.info("Aantal nieuwe onroerende zaken is: " + nwOnrrgd);
         // 2.4
-        LOG.debug("Ophalen gekoppelde objecten");
+      /*  LOG.debug("Ophalen gekoppelde objecten");
         long gekoppeld = this.getGekoppeldeObjecten(workDir);
         LOG.info("Aantal gekoppeld objecten: " + gekoppeld);
         // 2.5
@@ -219,18 +219,18 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         long oppVeranderd = this.getGewijzigdeOpp(workDir);
         LOG.info("Aantal oppervlakte veranderd objecten: " + oppVeranderd);
         // 2.8
-        LOG.debug("Ophalen nieuwe subjecten");
-        long nwSubject = this.getNieuweSubjecten(workDir);
-        LOG.info("Aantal nieuwe subjecten: " + nwSubject);
+        LOG.debug("Ophalen nieuwe subjecten");*/
+        /*long nwSubject = this.getNieuweSubjecten(workDir);
+        LOG.info("Aantal nieuwe subjecten: " + nwSubject);*/
         // 2.9
-        LOG.debug("Ophalen BSN aangepast");
+      /*  LOG.debug("Ophalen BSN aangepast");
         long bsn = this.getBSNAangevuld(workDir);
         LOG.info("Aantal aangepast bsn: " + bsn);
 
         if (nwOnrrgd < 0 || gekoppeld < 0 || vervallen < 0 || verkopen < 0 || oppVeranderd < 0 || nwSubject < 0 || bsn < 0) {
             errorCondition = true;
             LOG.trace("Een van de queries heeft een onverwacht resultaat gegeven, errorCondition=" + errorCondition);
-        }
+        }*/
         // zippen resultaat in workZip
         try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(workZip.toPath()))) {
             LOG.debug("Aanmaken van zip bestand: " + workZip);
@@ -309,146 +309,46 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      * @return aantal nieuw
      */
     private long getNieuweOnroerendGoed(File workDir) {
-//        StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
-//                // de ON (o.kad_identif) zorgt ervoor dat we niet voor ieder bron
-//                //  object van een samenvoeging een record krijgen, maar dat is een uitdrukkelijke wens (mail dd.18-12-18)
-//                // .append("ON (o.kad_identif) ")
-//                .append("o.kad_identif, ")
-//                .append("o.dat_beg_geldh, ")
-//                .append("q.ka_kad_gemeentecode  AS gemeentecode, ")
-//                .append("q.ka_perceelnummer     AS perceelnummer, ")
-//                .append("q.ka_deelperceelnummer AS deelperceelnummer, ")
-//                .append("q.ka_sectie            AS sectie, ")
-//                .append("q.ka_appartementsindex AS appartementsindex, ")
-//                .append("tax.kpr_nummer, ")
-//                .append("bel.bpl_identif, ")
-//                .append("bel.naam_zakelijk_gerechtigde, ")
-//                .append("q.grootte_perceel, ")
-//                .append("q.x, ")
-//                .append("q.y, ")
-//                .append("z.ar_teller            AS aandeel_teller, ")
-//                .append("z.ar_noemer            AS aandeel_noemer, ")
-//                .append("z.fk_3avr_aand         AS rechtcode, ")
-//                .append("avr.omschr_aard_verkregenr_recht AS rechtomschrijving, ")
-//                .append("h.fk_sc_rh_koz_kad_identif AS ontstaan_uit, ")
-//                .append("h.aard, ")
-//                .append("arch.gemeentecode             AS ontstaan_uit_gemeentecode,  ")
-//                .append("arch.perceelnummer            AS ontstaan_uit_perceelnummer, ")
-//                .append("arch.deelperceelnummer        AS ontstaan_uit_deelperceelnummer, ")
-//                .append("arch.sectie                   AS ontstaan_uit_sectie,  ")
-//                .append("arch.appartementsindex        AS ontstaan_uit_appartementsindex ")
-//                .append("FROM kad_onrrnd_zk o ")
-//                // samengestelde app_re en kad_perceel als q
-//                .append("LEFT JOIN (SELECT  ")
-//                .append("  ar.sc_kad_identif, ")
-//                .append("  ar.ka_kad_gemeentecode, ")
-//                .append("  ar.ka_perceelnummer, ")
-//                .append("  null AS ka_deelperceelnummer, ")
-//                .append("  ar.ka_sectie, ")
-//                .append("  ar.ka_appartementsindex, ")
-//                .append("  null AS grootte_perceel, ")
-//                .append("  null AS x, ")
-//                .append("  null AS y ")
-//                .append("FROM app_re ar ")
-//                .append("UNION ALL SELECT ")
-//                .append("  p.sc_kad_identif, ")
-//                .append("  p.ka_kad_gemeentecode, ")
-//                .append("  p.ka_perceelnummer, ")
-//                .append("  p.ka_deelperceelnummer, ")
-//                .append("  p.ka_sectie, ")
-//                .append("  null AS ka_appartementsindex, ")
-//                .append("  p.grootte_perceel, ")
-//                .append("  ST_X(p.plaatscoordinaten_perceel) AS x, ")
-//                .append("  ST_Y(p.plaatscoordinaten_perceel) AS y ")
-//                .append("FROM kad_perceel p) q ")
-//                // einde samenstelling app_re en kad_perceel als q
-//                .append("ON o.kad_identif = q.sc_kad_identif ")
-//                // zakelijk recht erbij
-//                .append("LEFT JOIN zak_recht z ON o.kad_identif = z.fk_7koz_kad_identif ")
-//                // soort recht omschrijving
-//                .append("LEFT JOIN aard_verkregen_recht avr ON z.fk_3avr_aand = avr.aand ")
-//                // ontstaan uit (NB. alleen eerste ontstaan uit, object kan uit meer dan 2 ontstaan)
-//                .append("LEFT JOIN kad_onrrnd_zk_his_rel h ON o.kad_identif = h.fk_sc_lh_koz_kad_identif ")
-//                // ophalen aanduiding van 'onstaan uit'
-//                .append("LEFT JOIN mb_kad_onrrnd_zk_archief arch ON h.fk_sc_rh_koz_kad_identif = arch.koz_identif ")
-//                // belastingplichtige
-//                .append("LEFT JOIN wdd.kad_zak_recht bel ON o.kad_identif = bel.sc_kad_identif ")
-//                // BKP erbij
-//                .append("LEFT JOIN ")
-//                .append(TAX_JOIN_CLAUSE_TBL)
-//                // Eigendom (recht van) (2), Erfpacht (recht van) (3), Gebruik en bewoning (recht van) (4), Vruchtgebruik (recht van) (12)
-//                .append(" WHERE z.fk_3avr_aand IN ( '2', '4', '3', '12')  AND '[")
-//                // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief,
-//                .append(df.format(van)).append(",").append(df.format(tot))
-//                .append("]'::DATERANGE @> o.dat_beg_geldh::date ")
-//                // maar niet in de archief tabel
-//                .append(" AND o.kad_identif NOT IN (")
-//                .append("     SELECT kad_identif FROM kad_onrrnd_zk_archief ")
-//                // met een datum voor "van" == geen archief record voorafgaand aan gevraagde periode
-//                //.append("     WHERE dat_beg_geldh::date < '")
-//                //.append(df.format(van)).append("'::date  ")
-//                //
-//                // gerechtigde is niet null
-//                .append(") AND z.fk_8pes_sc_identif IS NOT NULL ")
-//                // kpr nummer/gibs onbekend
-//                .append(" AND tax.kpr_nummer IS NULL");
-
+        
 // optimalisaties:
 //   - gebruik mb_kad_onrrnd_zk_adres
 //   - gebruik extra kolom in tax.belastingplichtige zodat we aanduiding2 kunnen gebruiken
 //   - gebruik een NOT EXISTS voor uitsluiten van bekende percelen/subjecten
-        StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
-                .append("o.koz_identif, ")
-                .append("o.begin_geldigheid, ")
-                .append("o.gemeentecode, ")
-                .append("o.perceelnummer, ")
-                .append("o.deelperceelnummer, ")
-                .append("o.sectie, ")
-                .append("o.appartementsindex, ")
-                //.append("-- tax.kpr_nummer, ")
-                .append("bel.bpl_identif, ")
-                .append("bel.naam_zakelijk_gerechtigde, ")
-                .append("o.grootte_perceel, ")
-                .append("ST_X(ST_Transform(ST_SetSRID(ST_MakePoint(o.lon, o.lat),4326),28992)) AS x, ")
-                .append("ST_Y(ST_Transform(ST_SetSRID(ST_MakePoint(o.lon, o.lat),4326),28992)) AS y, ")
-                .append("z.ar_teller AS aandeel_teller, ")
-                .append("z.ar_noemer AS aandeel_noemer, ")
-                .append("z.fk_3avr_aand AS rechtcode, ")
-                .append("avr.omschr_aard_verkregenr_recht AS rechtomschrijving, ")
+        StringBuilder sql = new StringBuilder()
+                .append("select ")
+                .append("distinct ")
+                .append("koz.koz_identif,")
+                .append("koz.aandeel,")
+                .append("koz.begin_geldigheid_datum,")
+                .append("koz.gemeentecode,")
+                .append("koz.perceelnummer,")
+                .append("koz.sectie,")
+                .append("koz.appartementsindex,")
+                .append("koz.naam,")
+                .append("koz.grootte_perceel,")
+                .append("ST_X(ST_Transform(ST_SetSRID(ST_MakePoint(lon, lat),4326),28992)) AS x, ")
+                .append("ST_Y(ST_Transform(ST_SetSRID(ST_MakePoint(lon, lat),4326),28992)) AS y, ")
+                .append("koz.omschr_aard_verkregen_recht as rechtsomschrijving,")
                 .append("h.fk_sc_rh_koz_kad_identif AS ontstaan_uit, ")
-                .append("h.aard, ")
+                .append("h.aard,")
                 .append("arch.gemeentecode AS ontstaan_uit_gemeentecode, ")
                 .append("arch.perceelnummer AS ontstaan_uit_perceelnummer, ")
                 .append("arch.deelperceelnummer AS ontstaan_uit_deelperceelnummer, ")
                 .append("arch.sectie AS ontstaan_uit_sectie, ")
                 .append("arch.appartementsindex AS ontstaan_uit_appartementsindex ")
-                .append("FROM ").append(VIEW_KAD_ONRRND_ZK_ADRES).append(" o ")
-                // zakelijk recht erbij
-                .append("LEFT JOIN zak_recht z ON o.koz_identif = z.fk_7koz_kad_identif ")
-                // soort recht omschrijving
-                .append("LEFT JOIN aard_verkregen_recht avr ON z.fk_3avr_aand = avr.aand ")
-                // ontstaan uit
-                .append("LEFT JOIN kad_onrrnd_zk_his_rel h ON o.koz_identif = h.fk_sc_lh_koz_kad_identif ")
-                // ophalen aanduiding van 'onstaan uit'
-                .append("LEFT JOIN mb_kad_onrrnd_zk_archief arch ON h.fk_sc_rh_koz_kad_identif = arch.koz_identif ")
-                // belastingplichtige
-                .append("LEFT JOIN wdd.kad_zak_recht bel ON o.koz_identif = bel.sc_kad_identif ")
-                //.append("-- LEFT JOIN tax.belastingplichtige tax ON o.aanduiding2 = tax.aanduiding2 ")
+                .append("from mb_koz_rechth koz ")
+                .append("LEFT JOIN kad_onrrnd_zk_his_rel h ON koz.koz_identif = h.fk_sc_lh_koz_kad_identif ")
+                .append("left join mb_kad_onrrnd_zk_archief arch on arch.overgegaan_in = koz.koz_identif ")
                 .append("WHERE '[")
-                // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief,
                 .append(df.format(van)).append(",").append(df.format(tot))
-                .append("]'::DATERANGE @> o.begin_geldigheid::date ")
-                // Eigendom (recht van) (2), Erfpacht (recht van) (3), Gebruik en bewoning (recht van) (4), Vruchtgebruik (recht van) (12)
-                .append("AND z.fk_3avr_aand IN ('2','4','3','12') ")
-                // gerechtigde is niet null
-                .append("AND z.fk_8pes_sc_identif IS NOT NULL ")
-                // maar niet in de archief tabel met een datum voor "van" == geen archief record voorafgaand aan gevraagde periode
-                .append("AND NOT EXISTS (  SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE dat_beg_geldh::date < '2019-01-01'::date and o.koz_identif=kad_identif ) ")
-                //-- als we dit aanzetten komen we er niet meer uit...
-                //.append("-- AND tax.kpr_nummer IS NULL
-                // -- vervangen door een not exist op aanduiding2
-                // in gibs onbekend
-                .append("AND NOT EXISTS ( SELECT aanduiding2 FROM tax.belastingplichtige WHERE o.aanduiding2 = aanduiding2 )");
+                .append("]'::DATERANGE @> koz.begin_geldigheid::date ")
+                .append("and omschr_aard_verkregen_recht in ")
+                .append("('Vruchtgebruik (recht van)','Eigendom (recht van)','Erfpacht (recht van)','Gebruik en bewoning (recht van)') ")
+                .append("and subject_identif IS NOT NULL ")
+                .append("AND NOT EXISTS (  SELECT koz_identif  FROM mb_kad_onrrnd_zk_archief  WHERE begin_geldigheid_datum < '")
+                .append( df.format(van))
+                .append(" '::date  and koz.koz_identif=koz_identif ) ")
+                .append("AND NOT EXISTS ( SELECT aanduiding2 FROM tax.belastingplichtige WHERE koz.aanduiding2 = aanduiding2 )");
 
         switch (f) {
             case "csv":
