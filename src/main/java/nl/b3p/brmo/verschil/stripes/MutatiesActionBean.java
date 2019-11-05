@@ -71,53 +71,17 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      * optionele format parameter, default is {@code json}.
      */
     @Validate
-    private String f = "json";
+    private String f = "csv";
 
     private ActionBeanContext context;
     private long copied;
     private boolean errorCondition = false;
-
-    // als gekoppeld wordt met een table
-    private static final String TAX_JOIN_CLAUSE_TBL = new StringBuilder()
-            .append("tax.belastingplichtige tax ON ( ")
-            .append("      q.ka_kad_gemeentecode = trim(LEADING '0' from tax.gemeentecode) ")
-            .append("  AND q.ka_sectie           = trim(tax.sectie) ")
-            .append("  AND q.ka_perceelnummer    = trim(LEADING '0' from tax.perceelnummer) ")
-            // deelperceel nummer wordt niet gevuld vanuit BRK want dat bestaat niet meer, dus ook niet in rsgb
-            //.append("  AND coalesce(q.ka_deelperceelnummer,'')=coalesce(trim(LEADING '0' from tax.deelperceelnummer),'') ")
-            .append("  AND coalesce(q.ka_appartementsindex,'') = coalesce(trim(LEADING '0' from tax.appartementsindex),'') )").toString();
-
-    // als gekoppeld wordt met een view
-    private static final String TAX_JOIN_CLAUSE_VW = new StringBuilder()
-            .append("tax.belastingplichtige tax ON ( ")
-            .append("      q.gemeentecode  = trim(LEADING '0' from tax.gemeentecode) ")
-            .append("  AND q.sectie        = trim(tax.sectie) ")
-            .append("  AND q.perceelnummer = trim(LEADING '0' from tax.perceelnummer) ")
-            // deelperceel nummer wordt niet gevuld vanuit BRK want dat bestaat niet meer, dus ook niet in rsgb
-            //.append("  AND coalesce(q.deelperceelnummer,'')=coalesce(trim(LEADING '0' from tax.deelperceelnummer),'') ")
-            .append("  AND coalesce(q.appartementsindex,'') = coalesce(trim(LEADING '0' from tax.appartementsindex),'') )").toString();
-
-    private static final String TAX_JOIN_CLAUSE_TBL_AANDUIDING2 = new StringBuilder()
-            .append("tax.belastingplichtige tax ON q.aanduiding2 = tax.aanduiding2 ").toString();
 
     /**
      * context param voor view vb_koz_rechth.
      *
      * @see #initParams()
      */
-    private String VIEW_KOZ_RECHTHEBBENDE = "vb_koz_rechth";
-    /**
-     * context param voor view vb_kad_onrrnd_zk_adres.
-     *
-     * @see #initParams()
-     */
-    private String VIEW_KAD_ONRRND_ZK_ADRES = "vb_kad_onrrnd_zk_adres";
-    /**
-     * context param voor view vb_kad_onrrnd_zk_archief.
-     *
-     * @see #initParams()
-     */
-    private String VIEW_KAD_ONRRND_ZK_ARCHIEF = "vb_kad_onrrnd_zk_archief";
     /**
      * context param voor sql JDBC_FETCH_SIZE.
      *
@@ -196,14 +160,14 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         File workZip = Files.createTempFile("brkmutsvc", ".zip").toFile();
         workZip.deleteOnExit();
 
-    //    this.checkTaxAanduiding2();
+        this.checkTaxAanduiding2();
         // uitvoeren queries
         // 2.3
         LOG.debug("Ophalen nieuwe onroerende zaken");
         long nwOnrrgd = this.getNieuweOnroerendGoed(workDir);
         LOG.info("Aantal nieuwe onroerende zaken is: " + nwOnrrgd);
         // 2.4
-      /*  LOG.debug("Ophalen gekoppelde objecten");
+        LOG.debug("Ophalen gekoppelde objecten");
         long gekoppeld = this.getGekoppeldeObjecten(workDir);
         LOG.info("Aantal gekoppeld objecten: " + gekoppeld);
         // 2.5
@@ -219,18 +183,18 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
         long oppVeranderd = this.getGewijzigdeOpp(workDir);
         LOG.info("Aantal oppervlakte veranderd objecten: " + oppVeranderd);
         // 2.8
-        LOG.debug("Ophalen nieuwe subjecten");*/
-        /*long nwSubject = this.getNieuweSubjecten(workDir);
-        LOG.info("Aantal nieuwe subjecten: " + nwSubject);*/
+        LOG.debug("Ophalen nieuwe subjecten");
+        long nwSubject = this.getNieuweSubjecten(workDir);
+        LOG.info("Aantal nieuwe subjecten: " + nwSubject);
         // 2.9
-      /*  LOG.debug("Ophalen BSN aangepast");
+        LOG.debug("Ophalen BSN aangepast");
         long bsn = this.getBSNAangevuld(workDir);
         LOG.info("Aantal aangepast bsn: " + bsn);
 
         if (nwOnrrgd < 0 || gekoppeld < 0 || vervallen < 0 || verkopen < 0 || oppVeranderd < 0 || nwSubject < 0 || bsn < 0) {
             errorCondition = true;
             LOG.trace("Een van de queries heeft een onverwacht resultaat gegeven, errorCondition=" + errorCondition);
-        }*/
+        }
         // zippen resultaat in workZip
         try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(workZip.toPath()))) {
             LOG.debug("Aanmaken van zip bestand: " + workZip);
@@ -388,7 +352,8 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
 //                .append("AND adr.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
 //                .append(df.format(van))
 //                .append("'::date < dat_beg_geldh::date) ORDER BY adr.koz_identif");
-        StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
+        StringBuilder sql = new StringBuilder()
+                .append("SELECT DISTINCT ")
                 .append("adr.koz_identif, ")
                 .append("adr.gemeentecode, ")
                 .append("adr.sectie, ")
@@ -402,12 +367,18 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("adr.huisnummer_toev, ")
                 .append("adr.woonplaats, ")
                 .append("adr.postcode ")
-                .append("FROM ").append(VIEW_KAD_ONRRND_ZK_ADRES).append(" adr ")
-                .append(" WHERE '[")
-                .append(df.format(van)).append(",").append(df.format(tot)).append("]'::DATERANGE @> adr.begin_geldigheid::date ")
-                .append("AND NOT EXISTS (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE kad_identif = adr.koz_identif AND '")
+                .append("FROM ")
+                .append("mb_kad_onrrnd_zk_adres")
+                .append(" adr ")
+                .append("WHERE '[ ")
                 .append(df.format(van))
-                .append("'::date < dat_beg_geldh::date) ORDER BY adr.koz_identif");
+                .append(", ")
+                .append(df.format(tot))
+                .append("]'::DATERANGE @> adr.begin_geldigheid::date ")
+                .append("AND NOT EXISTS ")
+                .append("(SELECT koz_identif FROM mb_kad_onrrnd_zk_archief WHERE koz_identif = adr.koz_identif AND '")
+                .append(df.format(van))
+                .append("'::date < begin_geldigheid_datum) ORDER BY adr.koz_identif");
         switch (f) {
             case "csv":
                 return queryToCSV(workDir, "GekoppeldeObjecten.csv", sql.toString());
@@ -455,18 +426,17 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("arch.deelperceelnummer, ")
                 .append("arch.appartementsindex ")
                 // 0-padding
-                .append("FROM ")
-                .append(VIEW_KAD_ONRRND_ZK_ARCHIEF)
+                .append("FROM mb_kad_onrrnd_zk_archief")
                 .append(" arch ")
                 .append("LEFT OUTER JOIN kad_onrrnd_zk koz ON arch.koz_identif = koz.kad_identif ")
                 // object heeft archief record in gevraagde periode
                 .append("WHERE '[")
                 .append(df.format(van)).append(",").append(df.format(tot))
-                .append("]'::DATERANGE @> arch.eind_geldigheid::date ")
+                .append("]'::DATERANGE @> arch.eind_geldigheid_datum ")
                 // object niet meer in actuele tabel
                 .append("AND koz.kad_identif IS NULL ")
                 // alleen de jongste archief record
-                .append("ORDER BY arch.koz_identif, arch.eind_geldigheid::date DESC");
+                .append("ORDER BY arch.koz_identif, arch.eind_geldigheid_datum DESC");
 
         switch (f) {
             case "csv":
@@ -482,34 +452,28 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      * periode waarvan de oppervlakte anders is dan het actuele perceel.
      */
     private long getGewijzigdeOpp(File workDir) {
-        StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (za.kad_identif) ")
-                .append("za.kad_identif, ")
-                // TODO data uit RSGB heeft geen 0-padding
+        StringBuilder sql = new StringBuilder()
+                .append("SELECT DISTINCT ON (za.koz_identif) ")
+                .append("za.koz_identif, ")
                 .append("k.ka_kad_gemeentecode AS gemeentecode, ")
                 .append("k.ka_sectie AS sectie, ")
                 .append("k.ka_perceelnummer AS perceelnummer, ")
                 .append("k.ka_deelperceelnummer AS deelperceelnummer, ")
-                // 0-padding
-                .append("za.dat_beg_geldh, ")
-                .append("pa.grootte_perceel AS opp_oud, ")
+                .append("za.begin_geldigheid_datum, ")
+                .append("za.grootte_perceel AS opp_oud, ")
                 .append("k.grootte_perceel  AS opp_actueel ")
-                .append("FROM kad_onrrnd_zk_archief za, kad_perceel_archief pa, kad_perceel k ")
-                // perceel moet in de archief zitten in gevraagde periode
+                .append("FROM mb_kad_onrrnd_zk_archief za, kad_perceel k ")
                 .append("WHERE '[")
                 .append(df.format(van)).append(",").append(df.format(tot))
-                .append("]'::DATERANGE @> za.dat_beg_geldh::DATE ")
-                .append("AND za.dat_beg_geldh    = pa.sc_dat_beg_geldh ")
-                .append("AND za.kad_identif      = pa.sc_kad_identif ")
-                .append("AND za.kad_identif      = k.sc_kad_identif ")
-                .append("AND pa.grootte_perceel != k.grootte_perceel ")
-                // dubbelop vanwege grootte_perceel check
-                // .append("AND za.clazz            = 'KADASTRAAL PERCEEL' ")
-                // perceel moet in de actueel zitten in de periode, anders vervallen of datafout
-                .append("AND za.kad_identif IN ( SELECT kad_identif FROM kad_onrrnd_zk ")
+                .append("]'::DATERANGE @> za.begin_geldigheid_datum ")
+                .append("AND za.koz_identif      = k.sc_kad_identif ")
+                .append("AND za.grootte_perceel != k.grootte_perceel ")
+                .append("AND za.koz_identif IN ")
+                .append("( SELECT kad_identif FROM kad_onrrnd_zk ")
                 .append("WHERE '[")
                 .append(df.format(van)).append(",").append(df.format(tot))
                 .append("]'::DATERANGE @> dat_beg_geldh::DATE ) ")
-                .append("ORDER BY za.kad_identif, za.dat_beg_geldh DESC");
+                .append("ORDER BY za.koz_identif, za.begin_geldigheid_datum DESC");
 
         switch (f) {
             case "csv":
@@ -527,7 +491,8 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      * @return aantal verkopen
      */
     private long getVerkopen(File workDir) {
-        StringBuilder sql = new StringBuilder("SELECT DISTINCT ")
+        StringBuilder sql = new StringBuilder()
+                .append("SELECT DISTINCT ")
                 .append("bron.ref_id, ")
                 .append("bron.datum::text as verkoopdatum, ")
                 .append("q.gemeentecode, ")
@@ -535,52 +500,20 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("q.perceelnummer, ")
                 .append("q.deelperceelnummer, ")
                 .append("q.appartementsindex, ")
-                // altijd leeg/null want alleen als belastingplichtige onbekend is is verkoop relevant
-                // .append("kpr_nummer, ")
-                .append("z.ar_teller AS aandeel_teller, ")
-                .append("z.ar_noemer AS aandeel_noemer, ")
-                .append("z.fk_3avr_aand AS rechtcode, ")
-                .append("avr.omschr_aard_verkregenr_recht AS rechtomschrijving ")
-                // verkoop + datum
-                .append("FROM ( SELECT brondocument.ref_id, max(brondocument.datum) AS datum FROM brondocument ")
-                // NB "Akte van Koop en Verkoop" zit altijd in BRONDOCUMENT tabel
-                .append("    WHERE brondocument.tabel='BRONDOCUMENT' AND brondocument.omschrijving = 'Akte van Koop en Verkoop' ")
-                .append("         AND '[").append(df.format(van)).append(",").append(df.format(tot)).append("]'::DATERANGE @> brondocument.datum ")
-                .append(" GROUP BY brondocument.ref_id) bron ")
-                // samengestelde app_re en kad_perceel als q
-                // zou evt ook "VIEW_KAD_ONRRND_ZK_ADRES" kunnen gebruuken, maar dat blijkt niet sneller
-//                .append("LEFT JOIN (SELECT  ")
-//                .append("  ar.sc_kad_identif, ")
-//                .append("  ar.ka_kad_gemeentecode AS gemeentecode, ")
-//                .append("  ar.ka_perceelnummer AS perceelnummer, ")
-//                .append("  null AS deelperceelnummer, ")
-//                .append("  ar.ka_sectie AS sectie, ")
-//                .append("  ar.ka_appartementsindex AS appartementsindex ")
-//                .append("FROM app_re ar ")
-//                .append("UNION ALL SELECT ")
-//                .append("  p.sc_kad_identif, ")
-//                .append("  p.ka_kad_gemeentecode AS gemeentecode, ")
-//                .append("  p.ka_perceelnummer AS perceelnummer, ")
-//                .append("  p.ka_deelperceelnummer AS deelperceelnummer, ")
-//                .append("  p.ka_sectie AS sectie, ")
-//                .append("  null AS appartementsindex ")
-//                .append("FROM kad_perceel p) q ")
-                // einde samenstelling app_re en kad_perceel als q
-//                .append("ON bron.ref_id::BIGINT=q.sc_kad_identif ")
-                .append("LEFT JOIN ").append(VIEW_KAD_ONRRND_ZK_ADRES)
-                .append(" q ON bron.ref_id::BIGINT=q.koz_identif ")
-                .append("LEFT JOIN zak_recht z ON bron.ref_id::BIGINT = z.fk_7koz_kad_identif ")
-                .append("LEFT JOIN aard_verkregen_recht avr ON z.fk_3avr_aand = avr.aand ")
-                // gebruik left join ipv join; mail Dimitri dd.23 april 2019
-                .append("LEFT JOIN ")
-                .append(TAX_JOIN_CLAUSE_TBL_AANDUIDING2)
+                .append("q.aandeel AS aandeel, ")
+                .append("q.omschr_aard_verkregen_recht AS rechtomschrijving ")
+                .append("FROM ( SELECT brondocument.ref_id, max(brondocument.datum) AS datum FROM brondocument WHERE brondocument.tabel='BRONDOCUMENT' AND ")
+                .append("brondocument.omschrijving in ('Vonnis van Onteigening','Besluit dat percelen niet langer onder de Natuurschoonwet 1928 vallen','Aanbr/doorh recht van opstal mbt het leggen/ houden van leidingen cq recht van BP ingev art. 5, lid 3 letter B','Stuk aanbrengen perceelsgegeven overig','Akte van Vestiging zakelijk recht van Erfpacht','Tweezijdige verklaring van eigendomsovergang door verjaring','Akte van Opheffing Splitsing in Appartementsrechten','Akte van Wijziging Splitsing in Appartementsrechten m.b.t. Appartementen','Stuk vervallen perceelsgegeven overig','Akte van Splitsing in Appartementsrechten','Stuk aanbrengen/doorhalen stuk relatie overig','Akte van Grensregeling of Dading','Stuk doorhaling beperkende bepaling op zak. recht overig (wel overboeking)','Akte van Schenking','Stuk betreffende een fusie/splitsing van rechtspersonen','Akte van Ontbinding m.b.t. Rechtspersoon/niet Rechts-persoon','Opgave wijziging grootte','Akte Ruilverkavelingsovereenkomst c.q. overeenkomst van kavelruil','Akte van Publieke Verkoop op grond van art. 1223 B.W. (definitief)','Verklaring waardeloosheid/Verklaring tenietgaan of afstand beperkte rechten/Vernietiging rechtshandeling','Stuk verenigen zakelijk recht op perceel','Overdracht onder voorbehoud zakelijk recht','Akte van toedeling van ruilverkaveling c.q. kavelruil','Akte van Opheffing Ondersplitsing in Appartementsrechten','Akte van rektifikatie','Akte Afgifte Legaat','Mededeling m.b.t. (aandringen op) rektifikatie','Akte van Ondersplitsing in Appartementsrechten','Stuk betreffende de bestemming van een onroerend goed tot gemeenschapp nut ivm mandeligheid (art. 1, Boek 5, BW)','Stuk wijziging perceelsgegeven overig','Akte van Inbreng','Redresstuk','Eenzijdige afstand (beperkt) zakelijk recht','Akte van Wijziging Ondersplitsing in Appartementsrechten','Stuk aanbrengen koopovereenkomst BW en WVG','Akte Naamswijziging rechtspersoon','Akte van Koop en Verkoop','Tweezijdige afstand zakelijk recht','Stuk aanbrengen subjektgegeven overig','Opgave wijziging blad, letter en ruit','Stuk doorhaling beperkende bepaling op zak. recht overig (géén overboeking)','Akte van Wijziging Splitsing in Appartementsrechten m.b.t. Reglement','Akte van Wijziging Splitsing in Appartementsrechten m.b.t. Onttrekken Grondperceel','Akte van Ruiling','Stuk aanbrengen koop, zie art. 7:3 BW','Akte van Vestiging zakelijk recht van Gebruik en Bewoning','Stuk doorhaling beperkende bepaling op perceel overig','Akte van Scheiding huwelijksgoederengemeenschap','Akte van Vestiging zakelijk recht van Opstal','Akte van Publieke Verkoop op vrijwillige basis (definitief)','Eenzijdige verklaring van eigendomsovergang door verjaring','Akte van Scheiding onverdeeldheid','Verklaring van Erfrecht','Akte van wijziging beperkt zakelijk recht','Akte van aanvulling','Metingstaat KAD 75 m.b.t. vernummering (matrix)','Beheersoverdracht i.o.v. de domeinbeheerder','Stuk eindigen tijdelijk verleend zakelijk recht','Stuk aanbrengen beperkende bepaling op zakelijk recht overig','Akte van Wijziging Splitsing in Appartementsrechten m.b.t. Toevoegen Grondperceel','Stuk Koop of voorovereenkomst zie art. 10 WVG','Stuk adreswijziging overig','Aanbrengen/doorhalen aantekening bij perceel t.b.v. WKPB','Vervallen verklaring (beperkt) zakelijk recht','Akte van Vestiging zakelijk recht van Vruchtgebruik','Akte van overdracht om niet')")
+                .append("AND '[")
+                .append(df.format(van)).append(",").append(df.format(tot))
+                .append("]'::DATERANGE @> brondocument.datum GROUP BY brondocument.ref_id) bron ")
+                .append("LEFT JOIN mb_koz_rechth q ON bron.ref_id::BIGINT=q.koz_identif ")
+                .append("LEFT JOIN tax.belastingplichtige tax ON q.aanduiding2 = tax.aanduiding2 ")
                 .append("WHERE ")
-                // met een rechthebbende
-                .append("z.fk_8pes_sc_identif IS NOT null ")
-                // eigendommen
-                .append("AND z.fk_3avr_aand IN ('2','4','3','12') ")
-                // alleen verkochte percelen waar belastingplichtige onbekend is
+                .append("q.subject_identif IS NOT NULL ")
+                .append("and omschr_aard_verkregen_recht in ('Vruchtgebruik (recht van)','Eigendom (recht van)','Erfpacht (recht van)','Gebruik en bewoning (recht van)') ")
                 .append("AND tax.kpr_nummer IS null");
+
 
         switch (f) {
             case "csv":
@@ -600,7 +533,8 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
      * @return aantal nieuwe subjecten
      */
     private long getNieuweSubjecten(File workDir) {
-        StringBuilder sql = new StringBuilder("SELECT DISTINCT ON (q.subject_identif) ")
+        StringBuilder sql = new StringBuilder()
+                .append("SELECT DISTINCT ON (q.subject_identif) ")
                 .append("q.subject_identif, ")
                 .append("q.begin_geldigheid, ")
                 .append("q.soort, ")
@@ -620,26 +554,12 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
                 .append("q.huisnummer_toev, ")
                 .append("q.postcode, ")
                 .append("q.woonplaats ")
-                // altijd null: tax.kpr_nummer
-                .append("FROM ").append(VIEW_KOZ_RECHTHEBBENDE).append(" q ")
-                .append("LEFT OUTER JOIN ").append(TAX_JOIN_CLAUSE_TBL_AANDUIDING2)
-
+                .append("FROM mb_koz_rechth q ")
+                .append("LEFT OUTER JOIN tax.belastingplichtige tax ON q.aanduiding2 = tax.aanduiding2 ")
                 .append("WHERE '[")
-                // objecten met datum begin geldigheid in de periode "van"/"tot" inclusief,
                 .append(df.format(van)).append(",").append(df.format(tot))
-                .append("]'::DATERANGE @> q.begin_geldigheid::date ")
-                // maar niet in de archief tabel met een datum voor "van".
-                // .append("AND q.koz_identif NOT IN (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE '")
-                //.append(df.format(van)).append("'::date < dat_beg_geldh::date) ")
-                //
-                //.append("AND NOT EXISTS (SELECT kad_identif FROM kad_onrrnd_zk_archief WHERE dat_beg_geldh::date < '")
-                //.append(df.format(van))
-                //.append("'::date AND q.koz_identif = kad_identif ) ")
-
-                // onbekend in GIBS
-                //.append("AND tax.kpr_nummer IS NULL ")
+                .append("]'::DATERANGE @> q.begin_geldigheid_datum ")
                 .append("AND tax.aanduiding2 IS NULL ")
-                // alleen de eerste naam met de oudste datum
                 .append("ORDER BY q.subject_identif, q.begin_geldigheid ASC");
 
         switch (f) {
@@ -807,15 +727,7 @@ public class MutatiesActionBean implements ActionBean, ValidationErrorHandler {
     }
 
     private void initParams() {
-        boolean use_mv = Boolean.parseBoolean(getContext().getServletContext().getInitParameter("use_mv"));
-        if (use_mv) {
-            LOG.info("Gebruik materialized views in de queries.");
-            VIEW_KOZ_RECHTHEBBENDE = VIEW_KOZ_RECHTHEBBENDE.replaceFirst("vb_", "mb_");
-            VIEW_KAD_ONRRND_ZK_ADRES = VIEW_KAD_ONRRND_ZK_ADRES.replaceFirst("vb_", "mb_");
-            VIEW_KAD_ONRRND_ZK_ARCHIEF = VIEW_KAD_ONRRND_ZK_ARCHIEF.replaceFirst("vb_", "mb_");
-        } else {
-            LOG.warn("Gebruik reguliere views in de queries (zeer langzaam).");
-        }
+      
 
         try {
             JDBC_FETCH_SIZE = Integer.parseInt(getContext().getServletContext().getInitParameter("jdbc_fetch_size"));
