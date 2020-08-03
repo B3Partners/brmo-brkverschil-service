@@ -11,6 +11,7 @@
         <cve>CVE-2016-5425</cve>
         <cve>CVE-2016-6325</cve>
         <cve>CVE-2017-6056</cve>
+        <cve>CVE-2020-8022</cve>
     </suppress>
     <suppress>
         <notes>
@@ -23,6 +24,7 @@
         <cve>CVE-2016-5425</cve>
         <cve>CVE-2016-6325</cve>
         <cve>CVE-2017-6056</cve>
+        <cve>CVE-2020-8022</cve>
     </suppress>
     <suppress>
         <notes>
@@ -34,6 +36,7 @@
         <cve>CVE-2016-5425</cve>
         <cve>CVE-2016-6325</cve>
         <cve>CVE-2017-6056</cve>
+        <cve>CVE-2020-8022</cve>
     </suppress>
     <suppress>
         <notes>
