@@ -270,7 +270,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.1.0</version>
+                    <version>3.2.0</version>
                     <configuration>
                         <nonFilteredFileExtensions>zip,gml,md,json,geojson,txt,sql,ods,xlxs</nonFilteredFileExtensions>
                     </configuration>
