@@ -116,7 +116,7 @@
         <dependency>
             <groupId>net.sourceforge.stripes</groupId>
             <artifactId>stripes</artifactId>
-            <version>1.7.0-beta4</version>
+            <version>1.7.0-async-beta</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
