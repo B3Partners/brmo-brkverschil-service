@@ -80,7 +80,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <test.skipTs>false</test.skipTs>
         <test.skipITs>true</test.skipITs>
-        <junit.jupiter.version>5.6.2</junit.jupiter.version>
+        <junit.jupiter.version>5.7.0</junit.jupiter.version>
         <brmo.version>2.0.2p1</brmo.version>
         <tomcat.version>7.0.105</tomcat.version>
         <postgresql.jdbc.version>42.2.16</postgresql.jdbc.version>
