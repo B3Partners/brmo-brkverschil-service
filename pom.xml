@@ -183,7 +183,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.2.18</version>
+            <version>${postgresql.jdbc.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
