@@ -82,7 +82,7 @@
         <test.skipITs>true</test.skipITs>
         <junit.jupiter.version>5.7.0</junit.jupiter.version>
         <brmo.version>2.0.2p2</brmo.version>
-        <tomcat.version>7.0.105</tomcat.version>
+        <tomcat.version>7.0.106</tomcat.version>
         <postgresql.jdbc.version>42.2.18</postgresql.jdbc.version>
         <slf4j.version>1.8.0-beta4</slf4j.version>
         <maven.surefire.version>3.0.0-M5</maven.surefire.version>
@@ -255,7 +255,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>3.5.15</version>
+            <version>3.6.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -293,6 +293,10 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-install-plugin</artifactId>
+                    <version>3.0.0-M1</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-release-plugin</artifactId>
                     <version>3.0.0-M1</version>
                 </plugin>
                 <plugin>
@@ -421,10 +425,6 @@
                 <plugin>
                     <artifactId>maven-site-plugin</artifactId>
                     <version>3.9.1</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-release-plugin</artifactId>
-                    <version>2.5.3</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-scm-publish-plugin</artifactId>
