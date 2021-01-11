@@ -13,3 +13,17 @@ updates:
   assignees:
   - mprins
   - mtoonen
+  ignore:
+  - dependency-name: com.fasterxml.jackson.core:jackson-databind
+    versions:
+    - ">= 2.10.x"
+    
+- package-ecosystem: github-actions
+  directory: "/"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 5
+  reviewers:
+  - mprins
+  assignees:
+  - mprins
