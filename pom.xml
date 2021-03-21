@@ -82,7 +82,7 @@
         <test.skipITs>true</test.skipITs>
         <junit.jupiter.version>5.7.1</junit.jupiter.version>
         <brmo.version>2.0.3</brmo.version>
-        <tomcat.version>7.0.106</tomcat.version>
+        <tomcat.version>7.0.108</tomcat.version>
         <postgresql.jdbc.version>42.2.19</postgresql.jdbc.version>
         <slf4j.version>1.8.0-beta4</slf4j.version>
         <maven.surefire.version>3.0.0-M5</maven.surefire.version>
