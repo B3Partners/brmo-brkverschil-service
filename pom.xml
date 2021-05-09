@@ -86,7 +86,7 @@
         <postgresql.jdbc.version>42.2.20</postgresql.jdbc.version>
         <slf4j.version>1.8.0-beta4</slf4j.version>
         <maven.surefire.version>3.0.0-M5</maven.surefire.version>
-        <jacoco-maven-plugin.version>0.8.6</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
         <jacoco.it.execution.data.file>${project.build.directory}/jacoco-it.exec</jacoco.it.execution.data.file>
         <jacoco.ut.execution.data.file>${project.build.directory}/jacoco-ut.exec</jacoco.ut.execution.data.file>
         <versions-maven-plugin.version>2.8.1</versions-maven-plugin.version>
