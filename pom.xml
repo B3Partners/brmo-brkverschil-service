@@ -83,7 +83,7 @@
         <junit.jupiter.version>5.7.2</junit.jupiter.version>
         <brmo.version>2.0.3</brmo.version>
         <tomcat.version>7.0.108</tomcat.version>
-        <postgresql.jdbc.version>42.2.20</postgresql.jdbc.version>
+        <postgresql.jdbc.version>42.2.21</postgresql.jdbc.version>
         <slf4j.version>1.8.0-beta4</slf4j.version>
         <maven.surefire.version>3.0.0-M5</maven.surefire.version>
         <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
